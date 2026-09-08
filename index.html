@@ -1,0 +1,1128 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="90days">
+<meta name="theme-color" content="#000000">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+<link rel="icon" type="image/png" sizes="64x64" href="./favicon-64.png">
+<title>90days challenge</title>
+<style>
+:root{
+  --bg:#000;
+  --surface:#1C1C1E;
+  --surface-2:#2C2C2E;
+  --hairline:rgba(84,84,88,.55);
+  --label:#FFFFFF;
+  --label-2:#98989F;
+  --label-3:#5B5B60;
+  --accent:#FF9F0A;
+  --accent-soft:rgba(255,159,10,.16);
+  --good:#30D158;
+  --bad:#FF453A;
+  --r:18px;
+  --tab-h:52px;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--label)}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,system-ui,sans-serif;
+  font-size:17px;line-height:1.35;
+  -webkit-font-smoothing:antialiased;
+  overscroll-behavior-y:contain;
+}
+button,input,textarea{font-family:inherit;font-size:17px;color:inherit}
+button{background:none;border:0;padding:0;cursor:pointer;touch-action:manipulation}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:10px}
+
+/* ---------- shell ---------- */
+#app{min-height:100dvh;display:flex;flex-direction:column}
+main{
+  flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding:0 18px calc(var(--tab-h) + env(safe-area-inset-bottom) + 44px);
+  padding-top:calc(env(safe-area-inset-top) + 14px);
+  max-width:560px;width:100%;margin:0 auto;
+}
+h1{font-size:34px;line-height:40px;font-weight:700;letter-spacing:-.5px;margin:6px 0 2px}
+h2{font-size:22px;line-height:28px;font-weight:700;letter-spacing:-.35px;margin:26px 0 10px}
+h3{font-size:17px;font-weight:600;margin:0}
+p{margin:0}
+.sub{color:var(--label-2);font-size:15px;margin:0 0 18px}
+
+/* ---------- karty ---------- */
+.card{background:var(--surface);border-radius:var(--r);padding:16px}
+.card + .card{margin-top:10px}
+.kicker{font-size:13px;color:var(--label-2);margin:0 0 6px}
+.body{font-size:16px;line-height:1.45;white-space:pre-wrap;word-break:break-word}
+
+/* ---------- tlačítka ---------- */
+.btn{
+  display:block;width:100%;text-align:center;
+  background:var(--accent);color:#000;font-weight:600;
+  border-radius:14px;padding:15px 18px;letter-spacing:-.2px;
+  transition:transform .12s ease,opacity .12s ease;
+}
+.btn:active{transform:scale(.975)}
+.btn[disabled]{background:var(--surface-2);color:var(--label-3);cursor:default}
+.btn.ghost{background:var(--surface);color:var(--label)}
+.btn.quiet{background:none;color:var(--label-2);font-weight:400;padding:12px}
+.btn.danger{background:none;color:var(--bad)}
+.row2{display:flex;gap:10px;align-items:center}
+.row2 .btn{flex:1}
+.row2 .btn.back{flex:0 0 96px;background:var(--surface);color:var(--label)}
+
+/* ---------- průvodce ---------- */
+.wizwrap{min-height:100dvh;display:flex;flex-direction:column;max-width:560px;margin:0 auto;
+  padding:calc(env(safe-area-inset-top) + 18px) 18px calc(env(safe-area-inset-bottom) + 18px)}
+.dots{display:flex;gap:5px;margin-bottom:26px}
+.dot{height:3px;flex:1;background:var(--surface-2);border-radius:2px;transition:background .25s ease}
+.dot.on{background:var(--accent)}
+.wizbody{flex:1;display:flex;flex-direction:column;justify-content:flex-start}
+.q{font-size:27px;line-height:33px;font-weight:700;letter-spacing:-.45px;margin:0 0 8px}
+.qhint{color:var(--label-2);font-size:15px;line-height:1.4;margin:0 0 20px}
+.field{
+  width:100%;background:var(--surface);border:0;border-radius:14px;
+  padding:14px 15px;color:var(--label);resize:none;line-height:1.4;
+  font-size:17px;outline:none;
+}
+.field::placeholder{color:var(--label-3)}
+.field:focus{box-shadow:inset 0 0 0 2px var(--accent-soft)}
+textarea.field{min-height:150px}
+.actline{display:flex;align-items:center;gap:10px}
+.actline + .actline{margin-top:9px}
+.actnum{
+  flex:0 0 30px;height:30px;border-radius:50%;background:var(--surface-2);
+  color:var(--label-2);font-size:14px;font-weight:600;
+  display:flex;align-items:center;justify-content:center
+}
+.actline .field{flex:1}
+.wizfoot{padding-top:20px}
+.introtitle{font-size:46px;line-height:50px;font-weight:700;letter-spacing:-1.2px;margin:0}
+.introlead{color:var(--label-2);font-size:22px;line-height:1.4;letter-spacing:-.3px;margin:18px 0 0;max-width:24ch}
+@media (max-height:640px){
+  .introtitle{font-size:38px;line-height:42px}
+  .introlead{font-size:19px}
+}
+
+/* ---------- prsten ---------- */
+.hero{display:flex;align-items:center;gap:18px;margin:14px 0 4px}
+.ring{position:relative;flex:0 0 108px;height:108px}
+.ring svg{transform:rotate(-90deg)}
+.ringtxt{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ringtxt b{font-size:30px;font-weight:700;letter-spacing:-.8px;line-height:1}
+.ringtxt span{font-size:11px;color:var(--label-2);margin-top:3px}
+.herotxt{flex:1;min-width:0}
+.herotxt .big{font-size:24px;font-weight:700;letter-spacing:-.4px;display:block}
+.herotxt .small{font-size:14px;color:var(--label-2);display:block;margin-top:4px}
+
+/* ---------- aktivity ---------- */
+.act{
+  display:flex;align-items:center;gap:13px;width:100%;text-align:left;
+  background:var(--surface);border-radius:16px;padding:15px 16px;
+  transition:background .18s ease;
+}
+.act + .act{margin-top:9px}
+.act:active{background:var(--surface-2)}
+.tick{
+  flex:0 0 27px;height:27px;border-radius:50%;
+  border:2px solid var(--label-3);
+  display:flex;align-items:center;justify-content:center;
+  transition:background .2s ease,border-color .2s ease,transform .2s ease;
+}
+.act.on .tick{background:var(--good);border-color:var(--good);transform:scale(1.05)}
+.tick svg{opacity:0;transition:opacity .18s ease}
+.act.on .tick svg{opacity:1}
+.act .txt{flex:1;font-size:16px;line-height:1.35;min-width:0;word-break:break-word}
+.act.on .txt{color:var(--label-2);text-decoration:line-through;text-decoration-color:var(--label-3)}
+
+.badge{
+  display:inline-block;font-size:12px;font-weight:600;padding:4px 9px;border-radius:8px;
+  background:var(--accent-soft);color:var(--accent);
+}
+.badge.grey{background:var(--surface-2);color:var(--label-2)}
+.badge.green{background:rgba(48,209,88,.16);color:var(--good)}
+
+/* ---------- bublinky ---------- */
+.mblock + .mblock{margin-top:22px}
+.mhead{display:flex;justify-content:space-between;align-items:baseline;margin:0 0 10px}
+.mhead b{font-size:16px;font-weight:600}
+.mhead span{font-size:13px;color:var(--label-2)}
+.grid{display:grid;grid-template-columns:repeat(10,1fr);gap:5px}
+@media (min-width:430px){.grid{gap:7px}.bub{font-size:13px}}
+.bub{
+  position:relative;aspect-ratio:1;border-radius:50%;
+  background:var(--surface);color:var(--label-2);
+  font-size:12px;font-weight:500;letter-spacing:-.2px;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .18s ease,color .18s ease,transform .18s ease;
+}
+.bub::after{content:"";position:absolute;left:50%;top:50%;width:38px;height:38px;transform:translate(-50%,-50%)}
+.bub.we{box-shadow:inset 0 0 0 1px var(--hairline);background:transparent}
+.bub.done{background:var(--accent);color:#000;font-weight:600}
+.bub.done.we{background:var(--accent-soft);color:var(--accent);box-shadow:none}
+.bub.today{box-shadow:0 0 0 2px var(--label)}
+.bub.future{color:var(--label-3);opacity:.55}
+button.bub:active{transform:scale(.88)}
+div.bub{cursor:default}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--label-2);margin-top:16px}
+.legend i{width:11px;height:11px;border-radius:50%;display:inline-block;vertical-align:-1px;margin-right:5px}
+
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:18px 0 4px}
+.stat{background:var(--surface);border-radius:14px;padding:13px 11px}
+.stat b{display:block;font-size:21px;letter-spacing:-.5px}
+.stat span{display:block;font-size:12px;color:var(--label-2);margin-top:2px}
+
+/* ---------- seznamy ---------- */
+.list{background:var(--surface);border-radius:var(--r);overflow:hidden}
+.item{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:14px 16px}
+.item + .item{box-shadow:inset 0 1px 0 var(--hairline)}
+.item:active{background:var(--surface-2)}
+.item .lead{flex:1;min-width:0}
+.item .lead b{display:block;font-size:16px;font-weight:500}
+.item .lead span{display:block;font-size:14px;color:var(--label-2);margin-top:2px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item .chev{color:var(--label-3);flex:0 0 auto}
+.note{font-size:13px;color:var(--label-3);line-height:1.45;margin:10px 4px 0}
+
+/* ---------- tab bar ---------- */
+nav{
+  position:fixed;left:0;right:0;bottom:0;z-index:40;
+  height:calc(var(--tab-h) + env(safe-area-inset-bottom));
+  padding-bottom:env(safe-area-inset-bottom);
+  display:flex;background:rgba(20,20,22,.82);
+  -webkit-backdrop-filter:saturate(180%) blur(22px);backdrop-filter:saturate(180%) blur(22px);
+  box-shadow:inset 0 .5px 0 var(--hairline);
+}
+nav button{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;font-size:10px;color:var(--label-3);letter-spacing:0;min-width:0}
+nav button span{white-space:nowrap}
+nav button.on{color:var(--accent)}
+
+/* ---------- sheet ---------- */
+#scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:50;opacity:0;
+  transition:opacity .24s ease;pointer-events:none}
+#scrim.on{opacity:1;pointer-events:auto}
+#sheet{
+  position:fixed;left:0;right:0;bottom:0;z-index:51;
+  background:#1C1C1E;border-radius:22px 22px 0 0;
+  padding:20px 18px calc(env(safe-area-inset-bottom) + 18px);
+  transform:translateY(102%);transition:transform .3s cubic-bezier(.32,.72,0,1);
+  max-width:560px;margin:0 auto;max-height:88dvh;overflow-y:auto;
+}
+#sheet.on{transform:translateY(0)}
+#sheet .grab{width:36px;height:5px;border-radius:3px;background:var(--surface-2);margin:0 auto 16px}
+
+/* ---------- oslava ---------- */
+#confetti{position:fixed;inset:0;width:100%;height:100%;z-index:80;pointer-events:none}
+#cheer{
+  position:fixed;inset:0;z-index:79;display:flex;align-items:center;justify-content:center;
+  padding:32px;text-align:center;background:rgba(0,0,0,.72);
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+  opacity:0;transition:opacity .35s ease;pointer-events:none;
+}
+#cheer.on{opacity:1;pointer-events:auto}
+#cheer .in{max-width:340px}
+#cheer .t{font-size:30px;line-height:36px;font-weight:700;letter-spacing:-.6px}
+#cheer .s{font-size:16px;color:var(--label-2);margin-top:10px;line-height:1.45}
+
+.finale{text-align:center;padding:40px 0 10px}
+.finale .num{font-size:64px;font-weight:700;letter-spacing:-2px;line-height:1}
+.finale .lab{color:var(--label-2);font-size:15px;margin-top:6px}
+
+@media (prefers-reduced-motion: reduce){
+  *{transition:none !important;animation:none !important}
+}
+</style>
+</head>
+<body>
+<div id="app"><main id="main"></main></div>
+<div id="scrim"></div>
+<div id="sheet"></div>
+<div id="cheer"><div class="in"><div class="t"></div><div class="s"></div></div></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============ úložiště ============ */
+var KEY="vyzva90";
+var store={
+  get:async function(){
+    try{
+      if(window.storage&&window.storage.get){
+        var r=await window.storage.get(KEY);
+        if(r&&r.value) return JSON.parse(r.value);
+        return null;
+      }
+    }catch(e){}
+    try{ var v=window.localStorage.getItem(KEY); return v?JSON.parse(v):null; }catch(e){}
+    return null;
+  },
+  set:async function(o){
+    var s=JSON.stringify(o);
+    try{
+      if(window.storage&&window.storage.set){ await window.storage.set(KEY,s); return true; }
+    }catch(e){}
+    try{ window.localStorage.setItem(KEY,s); return true; }catch(e){}
+    return false;
+  }
+};
+
+var DB=null, booted=false, saveT=null;
+function fresh(){
+  return {
+    v:1,
+    setup:null,
+    startDate:null,
+    days:{},          /* "12": {done:true, acts:[true,true,false]} */
+    claimed:{},       /* "w3":true, "m1":true, "final":true */
+    draft:{goal:"",why:"",acts:["","",""],rw:"",rm:"",rf:"",pen:""},
+    step:0,
+    tab:"dnes"
+  };
+}
+function save(){ clearTimeout(saveT); saveT=setTimeout(saveNow,400); }
+function saveNow(){ if(booted) store.set(DB); }
+
+/* ============ datum a dny ============ */
+function iso(d){
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+function parseISO(s){ var p=String(s).split("-"); return new Date(+p[0],+p[1]-1,+p[2]); }
+function dateOfDay(n){
+  var d=parseISO(DB.startDate); d.setDate(d.getDate()+(n-1)); return d;
+}
+function currentDay(){
+  if(!DB.startDate) return 1;
+  var a=parseISO(DB.startDate), b=parseISO(iso(new Date()));
+  var diff=Math.round((b-a)/86400000);
+  return diff+1;
+}
+function isWeekend(n){ var w=dateOfDay(n).getDay(); return w===0||w===6; }
+var DN=["neděle","pondělí","úterý","středa","čtvrtek","pátek","sobota"];
+var MN=["ledna","února","března","dubna","května","června","července","srpna","září","října","listopadu","prosince"];
+function humanDate(d){ return DN[d.getDay()]+" "+d.getDate()+". "+MN[d.getMonth()]; }
+function nPl(n,a,b,c){ return n+" "+(n===1?a:(n>=2&&n<=4?b:c)); }
+
+function dayRec(n){
+  var k=String(n);
+  if(!DB.days[k]) DB.days[k]={done:false,acts:[false,false,false]};
+  return DB.days[k];
+}
+/* Cteni pro vykresleni - zaznam nezaklada. */
+function readRec(n){
+  return DB.days[String(n)]||{done:false,acts:[false,false,false]};
+}
+function isDone(n){ var d=DB.days[String(n)]; return !!(d&&d.done); }
+function doneCount(){ var c=0; for(var n=1;n<=90;n++) if(isDone(n)) c++; return c; }
+function doneInMonth(m){ var c=0; for(var i=1;i<=30;i++) if(isDone(m*30+i)) c++; return c; }
+
+/* Série: víkend nepřerušuje, dnešek se nepočítá jako selhání, dokud trvá. */
+function streak(){
+  var cur=Math.min(currentDay(),90), s=0;
+  for(var n=cur;n>=1;n--){
+    if(isDone(n)){ s++; continue; }
+    if(n===cur) continue;
+    if(isWeekend(n)) continue;
+    break;
+  }
+  return s;
+}
+function bestStreak(){
+  var best=0,s=0,cur=Math.min(currentDay(),90);
+  for(var n=1;n<=cur;n++){
+    if(isDone(n)) s++;
+    else if(isWeekend(n)) continue;
+    else { if(s>best) best=s; s=0; }
+  }
+  return s>best?s:best;
+}
+/* Zmeškané: uplynulé pracovní dny bez odškrtnutí. */
+function missed(){
+  var cur=Math.min(currentDay(),91), c=0;
+  for(var n=1;n<cur;n++) if(!isDone(n)&&!isWeekend(n)) c++;
+  return c;
+}
+
+/* ============ odměny ============ */
+/* Týden = 7 dní výzvy. 90 dní = 12 celých týdnů + 6 dní (13. blok). */
+function weekRange(w){ var a=(w-1)*7+1; return [a,Math.min(a+6,90)]; }
+function weekReq(w){
+  var r=weekRange(w),req=0;
+  for(var n=r[0];n<=r[1];n++) if(!isWeekend(n)) req++;
+  return req;
+}
+function weekDone(w){
+  var r=weekRange(w),c=0;
+  for(var n=r[0];n<=r[1];n++) if(isDone(n)&&!isWeekend(n)) c++;
+  return c;
+}
+/* Kolik povinnych dnu v tydnu jeste chybi odskrtnout. */
+function weekLeft(w){
+  var r=weekRange(w),c=0;
+  for(var n=r[0];n<=r[1];n++) if(!isDone(n)&&!isWeekend(n)) c++;
+  return c;
+}
+function weekEarned(w){
+  var r=weekRange(w);
+  if(currentDay()<=r[1]) return false;
+  for(var n=r[0];n<=r[1];n++) if(!isDone(n)&&!isWeekend(n)) return false;
+  return true;
+}
+function monthEarned(m){
+  var a=m*30+1,b=a+29;
+  if(currentDay()<=b) return false;
+  for(var n=a;n<=b;n++) if(!isDone(n)&&!isWeekend(n)) return false;
+  return true;
+}
+function allRequiredDone(){
+  for(var n=1;n<=90;n++) if(!isDone(n)&&!isWeekend(n)) return false;
+  return true;
+}
+/* Vyzva je u konce, kdyz uplynul 90. den, nebo kdyz uz neni co odskrtnout. */
+function challengeOver(){
+  var c=currentDay();
+  return c>90 || doneCount()===90 || (c>=90 && allRequiredDone());
+}
+function finalEarned(){ return challengeOver() && allRequiredDone(); }
+
+/* Datum n-teho dne libovolne vyzvy, i archivovane. */
+function dayOn(startDate,n){ var d=parseISO(startDate); d.setDate(d.getDate()+(n-1)); return d; }
+function weekendOn(startDate,n){ var w=dayOn(startDate,n).getDay(); return w===0||w===6; }
+function shortDate(isoStr){ var d=parseISO(isoStr); return d.getDate()+". "+(d.getMonth()+1)+". "+d.getFullYear(); }
+
+/* Ulozi bezici vyzvu do historie i s cili, odmenami a odskrtanymi dny. */
+function archiveCurrent(){
+  if(!DB.setup||!DB.startDate) return null;
+  var rec={
+    id:"a"+Date.now()+"-"+Math.floor(Math.random()*1000),
+    startDate:DB.startDate,
+    endDate:iso(dateOfDay(90)),
+    archivedAt:iso(new Date()),
+    lastDay:Math.min(currentDay(),90),
+    setup:JSON.parse(JSON.stringify(DB.setup)),
+    days:JSON.parse(JSON.stringify(DB.days)),
+    done:doneCount(),
+    missed:missed(),
+    best:bestStreak(),
+    completed:finalEarned()
+  };
+  if(!DB.archive) DB.archive=[];
+  DB.archive.unshift(rec);
+  return rec;
+}
+/* Nova vyzva - historie zustava. */
+function restart(withArchive){
+  if(withArchive) archiveCurrent();
+  var arch=DB.archive||[];
+  DB=fresh();
+  DB.archive=arch;
+  saveNow();
+}
+function pendingRewards(){
+  var out=[];
+  for(var w=1;w<=13;w++) if(weekEarned(w)&&!DB.claimed["w"+w]) out.push({id:"w"+w,t:"Týdenní odměna",s:"Za "+w+". týden",txt:DB.setup.rw});
+  for(var m=0;m<3;m++) if(monthEarned(m)&&!DB.claimed["m"+m]) out.push({id:"m"+m,t:"Měsíční odměna",s:"Za "+(m+1)+". měsíc",txt:DB.setup.rm});
+  if(finalEarned()&&!DB.claimed.final) out.push({id:"final",t:"Odměna za dokončení",s:"90 dní hotovo",txt:DB.setup.rf});
+  return out;
+}
+
+/* ============ ikony ============ */
+var IC={
+  check:'<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M3 8l3.2 3.2L12 4.6" stroke="#000" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  chev:'<svg width="8" height="13" viewBox="0 0 8 13" fill="none"><path d="M1.5 1.5L6.5 6.5L1.5 11.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  today:'<svg width="23" height="23" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 7.5V12l3 1.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
+  grid:'<svg width="23" height="23" viewBox="0 0 24 24" fill="none"><circle cx="7" cy="7" r="2.6" stroke="currentColor" stroke-width="1.7"/><circle cx="17" cy="7" r="2.6" stroke="currentColor" stroke-width="1.7"/><circle cx="7" cy="17" r="2.6" stroke="currentColor" stroke-width="1.7"/><circle cx="17" cy="17" r="2.6" stroke="currentColor" stroke-width="1.7"/></svg>',
+  star:'<svg width="23" height="23" viewBox="0 0 24 24" fill="none"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9-5.2-2.8-5.2 2.8 1-5.9L3.5 9.7l5.9-.8L12 3.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>',
+  hist:'<svg width="23" height="23" viewBox="0 0 24 24" fill="none"><rect x="3.2" y="4.2" width="17.6" height="4.4" rx="1.6" stroke="currentColor" stroke-width="1.7"/><path d="M5 8.6v9.6a2 2 0 002 2h10a2 2 0 002-2V8.6" stroke="currentColor" stroke-width="1.7"/><path d="M9.8 12.6h4.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>'
+};
+
+/* ============ oslava ============ */
+function confetti(n){
+  try{
+    if(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    var old=document.getElementById("confetti"); if(old) old.remove();
+    var cv=document.createElement("canvas");
+    cv.id="confetti"; document.body.appendChild(cv);
+    var ctx=cv.getContext("2d"); if(!ctx) return;
+    var dpr=Math.min(window.devicePixelRatio||1,2);
+    var W=cv.clientWidth||window.innerWidth, H=cv.clientHeight||window.innerHeight;
+    cv.width=W*dpr; cv.height=H*dpr; ctx.scale(dpr,dpr);
+    var COLORS=["#FF9F0A","#FFD60A","#30D158","#FFFFFF","#64D2FF"];
+    var P=[],N=n||110;
+    for(var i=0;i<N;i++){
+      P.push({
+        x:W*(0.12+0.76*Math.random()), y:H*0.44+(Math.random()*46-23),
+        vx:(Math.random()-0.5)*9.5, vy:-7-Math.random()*9.5,
+        w:5+Math.random()*6, h:8+Math.random()*7,
+        rot:Math.random()*Math.PI, vr:(Math.random()-0.5)*0.34,
+        c:COLORS[(Math.random()*COLORS.length)|0], sway:Math.random()*Math.PI*2
+      });
+    }
+    var t0=(window.performance&&performance.now?performance.now():Date.now()), DUR=2800;
+    (function frame(now){
+      now=now||(window.performance&&performance.now?performance.now():Date.now());
+      var el=now-t0;
+      if(el>DUR||!document.getElementById("confetti")){ cv.remove(); return; }
+      ctx.clearRect(0,0,W,H);
+      var fade=el>DUR-800?Math.max(0,(DUR-el)/800):1;
+      for(var j=0;j<P.length;j++){
+        var p=P[j];
+        p.vy+=0.32; p.sway+=0.08;
+        p.x+=p.vx+Math.sin(p.sway)*0.7; p.y+=p.vy; p.rot+=p.vr;
+        ctx.save(); ctx.globalAlpha=fade; ctx.translate(p.x,p.y); ctx.rotate(p.rot);
+        ctx.fillStyle=p.c; ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h); ctx.restore();
+      }
+      requestAnimationFrame(frame);
+    })();
+  }catch(e){}
+}
+var cheerT=null;
+function cheer(title,sub,ms,big){
+  confetti(big?190:110);
+  var el=document.getElementById("cheer");
+  el.querySelector(".t").textContent=title;
+  el.querySelector(".s").textContent=sub||"";
+  el.classList.add("on");
+  clearTimeout(cheerT);
+  cheerT=setTimeout(function(){ el.classList.remove("on"); }, ms||2600);
+  el.onclick=function(){ clearTimeout(cheerT); el.classList.remove("on"); };
+}
+function buzz(ms){ try{ if(navigator.vibrate) navigator.vibrate(ms||12); }catch(e){} }
+
+/* ============ prsten ============ */
+function ring(pct,center,label){
+  var R=48,C=2*Math.PI*R,off=C*(1-Math.max(0,Math.min(1,pct)));
+  return '<div class="ring"><svg width="108" height="108" viewBox="0 0 108 108">'+
+    '<circle cx="54" cy="54" r="'+R+'" fill="none" stroke="#2C2C2E" stroke-width="9"/>'+
+    '<circle cx="54" cy="54" r="'+R+'" fill="none" stroke="var(--accent)" stroke-width="9" stroke-linecap="round"'+
+    ' stroke-dasharray="'+C.toFixed(1)+'" stroke-dashoffset="'+off.toFixed(1)+'"/>'+
+    '</svg><div class="ringtxt"><b>'+center+'</b><span>'+label+'</span></div></div>';
+}
+
+/* ============ průvodce ============ */
+var STEPS=[
+  {k:"intro"},
+  {k:"goal",  q:"Čeho chceš za 90 dní dosáhnout?",
+   h:"Napiš to konkrétně a měřitelně. Ne „zhubnout“, ale „zhubnout 9 kilo“.",
+   ph:"Za 90 dní budu…", area:true},
+  {k:"why",   q:"Proč to musíš dokončit, ať se děje, co se děje?",
+   h:"K tomuhle se budeš vracet ve dnech, kdy se ti nebude chtít. Piš na tělo.",
+   ph:"Protože…", area:true},
+  {k:"acts",  q:"Které tři věci budeš dělat každý den?",
+   h:"Malé kroky, které zvládneš i ve špatný den. Víkendy jsou dobrovolné.",
+   ph:""},
+  {k:"rw",    q:"Jak se odměníš po každém splněném týdnu?",
+   h:"Něco malého a hmatatelného, co si dopřeješ hned.", ph:"Např. oblíbená večeře venku"},
+  {k:"rm",    q:"Jak se odměníš po každém splněném měsíci?",
+   h:"O stupeň větší než ta týdenní.", ph:"Např. masáž, výlet na víkend"},
+  {k:"rf",    q:"Co dostaneš za dokončení celé výzvy?",
+   h:"Tady nešetři. Odměna musí být tak velká, aby se kvůli ní vyplatilo nepolevit.",
+   ph:"Např. cesta, o které roky mluvíš"},
+  {k:"pen",   q:"Co se stane, když výzvu nedokončíš?",
+   h:"Trest, který tě opravdu zabolí. Ideálně takový, o kterém ví i někdo další.",
+   ph:"Např. pošlu 10 000 Kč tomu, koho nesnáším"},
+  {k:"summary"}
+];
+function stepValid(i){
+  var s=STEPS[i],d=DB.draft;
+  if(s.k==="intro"||s.k==="summary") return true;
+  if(s.k==="acts") return d.acts.every(function(a){ return a.trim().length>0; });
+  return String(d[s.k]||"").trim().length>0;
+}
+function esc(s){
+  return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+function renderWizard(){
+  var i=DB.step, s=STEPS[i], d=DB.draft, h="";
+  var app=document.getElementById("app");
+  app.className="wiz";
+
+  var dots="";
+  for(var k=1;k<STEPS.length-1;k++) dots+='<div class="dot'+(k<=i?" on":"")+'"></div>';
+
+  if(s.k==="intro"){
+    h='<div class="wizbody" style="justify-content:center">'+
+      '<h1 class="introtitle">90days<br>challenge 🔥</h1>'+
+      '<p class="introlead">Pro každého, kdo chce od života mnohem více než jen průměr.</p>'+
+      '<button class="btn" style="margin-top:34px" data-w="next">Začít výzvu</button>'+
+      ((DB.archive&&DB.archive.length)
+        ? '<button class="btn quiet" style="margin-top:4px" data-act="tabhist">Historie · '+
+          nPl(DB.archive.length,"uzavřená výzva","uzavřené výzvy","uzavřených výzev")+'</button>'
+        : '')+
+      '</div>';
+  } else if(s.k==="summary"){
+    var ok=STEPS.every(function(_,ix){ return stepValid(ix); });
+    h='<div class="wizbody"><h1 style="margin-bottom:6px">Zkontroluj to</h1>'+
+      '<p class="sub">Po spuštění poběží 90 dní v kuse. Změnit to půjde i potom.</p>'+
+      sumCard("Cíl na 90 dní",d.goal)+
+      sumCard("Proč to dokončím",d.why)+
+      sumCard("Denně",d.acts.map(function(a,ix){ return (ix+1)+". "+a; }).join("\n"))+
+      sumCard("Týdenní odměna",d.rw)+
+      sumCard("Měsíční odměna",d.rm)+
+      sumCard("Za dokončení",d.rf)+
+      sumCard("Trest za nedokončení",d.pen)+
+      '</div><div class="wizfoot"><div class="row2">'+
+      '<button class="btn back" data-w="back">Zpět</button>'+
+      '<button class="btn" data-w="start"'+(ok?"":" disabled")+'>Spustit výzvu</button></div></div>';
+  } else if(s.k==="acts"){
+    h='<div class="wizbody"><p class="q">'+s.q+'</p><p class="qhint">'+s.h+'</p>'+
+      d.acts.map(function(a,ix){
+        return '<div class="actline"><div class="actnum">'+(ix+1)+'</div>'+
+          '<input class="field" data-act-i="'+ix+'" value="'+esc(a)+'" placeholder="'+
+          ["Např. 30 minut pohybu","Např. 10 stran knihy","Např. 20 studených sprch"][ix]+'"></div>';
+      }).join("")+
+      '</div><div class="wizfoot"><div class="row2">'+
+      '<button class="btn back" data-w="back">Zpět</button>'+
+      '<button class="btn" data-w="next"'+(stepValid(i)?"":" disabled")+'>Pokračovat</button></div></div>';
+  } else {
+    h='<div class="wizbody"><p class="q">'+s.q+'</p><p class="qhint">'+s.h+'</p>'+
+      (s.area
+        ? '<textarea class="field" data-k="'+s.k+'" placeholder="'+esc(s.ph)+'">'+esc(d[s.k])+'</textarea>'
+        : '<input class="field" data-k="'+s.k+'" value="'+esc(d[s.k])+'" placeholder="'+esc(s.ph)+'">')+
+      '</div><div class="wizfoot"><div class="row2">'+
+      '<button class="btn back" data-w="back">Zpět</button>'+
+      '<button class="btn" data-w="next"'+(stepValid(i)?"":" disabled")+'>Pokračovat</button></div></div>';
+  }
+
+  app.innerHTML='<div class="wizwrap"><div class="dots">'+dots+'</div>'+h+'</div>';
+
+  var f=app.querySelector(".field");
+  if(f&&i>0&&s.k!=="summary") setTimeout(function(){ try{ f.focus(); }catch(e){} },90);
+}
+function sumCard(t,v){
+  return '<div class="card"><p class="kicker">'+t+'</p><p class="body">'+esc(v||"—")+'</p></div>';
+}
+
+function wizAct(a){
+  if(a==="next"){
+    if(!stepValid(DB.step)) return;
+    DB.step=Math.min(DB.step+1,STEPS.length-1); saveNow(); renderWizard(); return;
+  }
+  if(a==="back"){ DB.step=Math.max(0,DB.step-1); saveNow(); renderWizard(); return; }
+  if(a==="start"){
+    var d=DB.draft;
+    DB.setup={
+      goal:d.goal.trim(), why:d.why.trim(),
+      acts:d.acts.map(function(x){ return x.trim(); }),
+      rw:d.rw.trim(), rm:d.rm.trim(), rf:d.rf.trim(), pen:d.pen.trim()
+    };
+    DB.startDate=iso(new Date());
+    DB.days={}; DB.claimed={}; DB.tab="dnes";
+    saveNow();
+    boot();
+    setTimeout(function(){
+      cheer("Tvá 90denní výzva začíná!","Den 1 z 90. Odškrtni si dnešní tři aktivity.",3800,true);
+    },120);
+  }
+}
+
+/* ============ hlavní obrazovky ============ */
+function shell(inner,tab){
+  var app=document.getElementById("app");
+  app.className="";
+  app.innerHTML='<main id="main">'+inner+'</main>'+
+    '<nav>'+
+      tabBtn("dnes","Dnes",IC.today,tab)+
+      tabBtn("progres","Progres",IC.grid,tab)+
+      tabBtn("vize","Vize",IC.star,tab)+
+      tabBtn("historie","Historie",IC.hist,tab)+
+    '</nav>';
+}
+function tabBtn(id,label,icon,cur){
+  return '<button data-tab="'+id+'" class="'+(cur===id?"on":"")+'">'+icon+'<span>'+label+'</span></button>';
+}
+
+/* ---- Dnes ---- */
+function viewDnes(){
+  var cur=currentDay();
+  if(challengeOver()) return viewFinale();
+
+  var rec=readRec(cur), we=isWeekend(cur), d=dateOfDay(cur);
+  var pct=doneCount()/90;
+  var h='';
+
+  h+='<h1>Den '+cur+'</h1>';
+  h+='<p class="sub">'+humanDate(d)+' &nbsp;·&nbsp; zbývá '+nPl(90-cur+1,"den","dny","dní")+'</p>';
+
+  h+='<div class="hero">'+ring(pct,doneCount(),"z 90 dní")+
+     '<div class="herotxt">'+
+       '<span class="big">'+nPl(streak(),"den","dny","dní")+' v řadě</span>'+
+       '<span class="small">Nejdelší série '+bestStreak()+' · Zmeškáno '+missed()+'</span>'+
+       (we?'<span style="display:inline-block;margin-top:9px" class="badge grey">Víkend — dobrovolné</span>':'')+
+     '</div></div>';
+
+  h+='<h2>Dnešní tři kroky</h2>';
+  h+=DB.setup.acts.map(function(a,ix){
+    return '<button class="act'+(rec.acts[ix]?" on":"")+'" data-act="tog" data-i="'+ix+'">'+
+      '<span class="tick">'+IC.check+'</span><span class="txt">'+esc(a)+'</span></button>';
+  }).join("");
+
+  if(rec.done){
+    h+='<div class="card" style="margin-top:12px;background:rgba(48,209,88,.12)">'+
+       '<p class="body" style="color:var(--good)">Den '+cur+' je odškrtnutý. Hotovo.</p></div>';
+  }else if(we){
+    h+='<button class="btn ghost" style="margin-top:12px" data-act="skipwe">Dnes je víkend, přeskočit</button>';
+  }
+
+  var pend=pendingRewards();
+  if(pend.length){
+    h+='<h2>Máš nárok na odměnu</h2><div class="list">'+
+      pend.map(function(r){
+        return '<div class="item"><div class="lead"><b>'+r.t+' · '+r.s+'</b><span>'+esc(r.txt)+'</span></div>'+
+          '<button class="badge" data-act="claim" data-id="'+r.id+'">Vyzvednout</button></div>';
+      }).join("")+'</div>';
+  }else{
+    h+='<h2>Nejbližší odměna</h2>'+nextRewardCard();
+  }
+
+  h+='<h2>Proč to dělám</h2><div class="card"><p class="body">'+esc(DB.setup.why)+'</p></div>';
+  h+='<p class="note">Přečti si to znovu ve dni, kdy se ti nebude chtít. Kvůli tomu jsi to psal.</p>';
+  return h;
+}
+function nextRewardCard(){
+  var cur=Math.min(currentDay(),90);
+  var w=Math.ceil(cur/7), r=weekRange(w);
+  var left=weekLeft(w);
+  var txt = left<=0
+    ? "Týden máš splněný, odměna se odemkne po "+r[1]+". dni."
+    : "Do týdenní odměny chybí "+nPl(left,"den","dny","dní")+" (dny "+r[0]+"–"+r[1]+").";
+  return '<div class="card"><p class="kicker">'+txt+'</p><p class="body">'+esc(DB.setup.rw)+'</p></div>';
+}
+
+/* ---- Progres ---- */
+function viewProgres(){
+  var cur=currentDay(), h='';
+  h+='<h1>Progres</h1>';
+  h+='<p class="sub">Ťukni na den a odškrtni ho. Budoucí dny zamčené.</p>';
+
+  h+='<div class="stats">'+
+    '<div class="stat"><b>'+doneCount()+'</b><span>splněno</span></div>'+
+    '<div class="stat"><b>'+streak()+'</b><span>v řadě</span></div>'+
+    '<div class="stat"><b>'+Math.round(doneCount()/90*100)+' %</b><span>hotovo</span></div>'+
+    '</div>';
+
+  for(var m=0;m<3;m++){
+    h+='<div class="mblock"><div class="mhead"><b>'+(m+1)+'. měsíc</b>'+
+       '<span>'+doneInMonth(m)+' / 30</span></div><div class="grid">';
+    for(var i=1;i<=30;i++){
+      var n=m*30+i, c="bub";
+      if(isWeekend(n)) c+=" we";
+      if(isDone(n)) c+=" done";
+      if(n===cur) c+=" today";
+      if(n>cur) c+=" future";
+      h+='<button class="'+c+'" data-act="bub" data-n="'+n+'">'+n+'</button>';
+    }
+    h+='</div></div>';
+  }
+
+  h+='<div class="legend">'+
+     '<span><i style="background:var(--accent)"></i>splněno</span>'+
+     '<span><i style="background:var(--surface)"></i>všední den</span>'+
+     '<span><i style="box-shadow:inset 0 0 0 1px var(--hairline)"></i>víkend, dobrovolný</span>'+
+     '<span><i style="background:var(--surface);box-shadow:0 0 0 2px #fff"></i>dnes</span>'+
+     '</div>';
+  h+='<p class="note">O výsledku nerozhodne jeden velký den, ale devadesát obyčejných.</p>';
+  return h;
+}
+
+/* ---- Vize ---- */
+function viewVize(){
+  var s=DB.setup,h='';
+  h+='<h1>Vize</h1>';
+  h+='<p class="sub">Spuštěno '+humanDate(parseISO(DB.startDate))+' · konec '+humanDate(dateOfDay(90))+'</p>';
+
+  h+='<div class="card"><p class="kicker">Cíl na 90 dní</p><p class="body">'+esc(s.goal)+'</p></div>';
+  h+='<div class="card"><p class="kicker">Proč to dokončím</p><p class="body">'+esc(s.why)+'</p></div>';
+
+  h+='<h2>Denní aktivity</h2><div class="list">'+
+    s.acts.map(function(a,ix){
+      return '<div class="item"><div class="actnum">'+(ix+1)+'</div><div class="lead"><b>'+esc(a)+'</b></div></div>';
+    }).join("")+'</div>';
+
+  h+='<h2>Odměny</h2><div class="list">'+
+    rewRow("Týdenní",s.rw,"w")+
+    rewRow("Měsíční",s.rm,"m")+
+    rewRow("Za dokončení",s.rf,"f")+
+    '</div>';
+
+  h+='<h2>Trest za nedokončení</h2>'+
+    '<div class="card" style="background:rgba(255,69,58,.12)"><p class="body">'+esc(s.pen)+'</p></div>';
+
+  h+='<h2>Nastavení</h2><div class="list">'+
+    editRow("goal","Cíl na 90 dní",s.goal)+
+    editRow("why","Proč to dokončím",s.why)+
+    editRow("a0","1. aktivita",s.acts[0])+
+    editRow("a1","2. aktivita",s.acts[1])+
+    editRow("a2","3. aktivita",s.acts[2])+
+    editRow("rw","Týdenní odměna",s.rw)+
+    editRow("rm","Měsíční odměna",s.rm)+
+    editRow("rf","Odměna za dokončení",s.rf)+
+    editRow("pen","Trest",s.pen)+
+    '</div>';
+
+  h+='<div class="list" style="margin-top:10px">'+
+     '<button class="item" data-act="backup"><div class="lead"><b>Záloha a obnovení</b>'+
+     '<span>Vyexportuj si data jako text</span></div><span class="chev">'+IC.chev+'</span></button>'+
+     '<button class="item" data-act="reset"><div class="lead"><b style="color:var(--bad)">Ukončit výzvu předčasně</b>'+
+     '<span>S uložením do historie, nebo bez něj</span></div></button>'+
+     '</div>';
+  return h;
+}
+function rewRow(t,txt,kind){
+  var st="";
+  if(kind==="w"){
+    var w=Math.ceil(Math.min(currentDay(),90)/7);
+    st=weekDone(w)+"/"+weekReq(w)+" v "+w+". týdnu";
+  }else if(kind==="m"){
+    var m=Math.min(2,Math.floor((Math.min(currentDay(),90)-1)/30));
+    st=doneInMonth(m)+"/30 v "+(m+1)+". měsíci";
+  }else{
+    st=doneCount()+"/90 dní";
+  }
+  return '<div class="item"><div class="lead"><b>'+esc(txt)+'</b><span>'+t+' · '+st+'</span></div></div>';
+}
+function editRow(k,t,v){
+  return '<button class="item" data-act="edit" data-k="'+k+'"><div class="lead"><b>'+t+'</b>'+
+    '<span>'+esc(v)+'</span></div><span class="chev">'+IC.chev+'</span></button>';
+}
+
+/* ---- Historie ---- */
+function viewHistorie(){
+  var arr=DB.archive||[];
+  if(DB.histOpen){
+    for(var i=0;i<arr.length;i++) if(arr[i].id===DB.histOpen) return viewHistDetail(arr[i]);
+    DB.histOpen=null;
+  }
+  var h='<h1>Historie</h1>';
+  if(!arr.length){
+    h+='<p class="sub">Zatím prázdná.</p>'+
+      '<div class="card"><p class="body">Až první výzvu uzavřeš, uloží se sem celá — cíl, důvod, denní aktivity, odměny i to, kolik dnů jsi odškrtl. Nic se nepřepisuje, každá výzva tu zůstane samostatně.</p></div>';
+    return h;
+  }
+  var fin=0;
+  for(var j=0;j<arr.length;j++) if(arr[j].completed) fin++;
+  h+='<p class="sub">'+nPl(arr.length,"uzavřená výzva","uzavřené výzvy","uzavřených výzev")+' · '+fin+' dokončeno</p>';
+  h+='<div class="list">'+arr.map(function(r){
+    return '<button class="item" data-act="histopen" data-id="'+r.id+'">'+
+      '<div class="lead"><b>'+esc(r.setup.goal)+'</b>'+
+      '<span>'+shortDate(r.startDate)+' – '+shortDate(r.endDate)+' · '+r.done+'/90 dní</span></div>'+
+      '<span class="badge '+(r.completed?"green":"grey")+'">'+(r.completed?"Splněno":r.done+"/90")+'</span>'+
+      '</button>';
+  }).join("")+'</div>';
+  h+='<p class="note">Ťukni na výzvu a podívej se, co sis tehdy dal za cíl.</p>';
+  return h;
+}
+function histGrid(r){
+  var h='';
+  for(var m=0;m<3;m++){
+    var c=0;
+    for(var q=1;q<=30;q++){ var d0=r.days[String(m*30+q)]; if(d0&&d0.done) c++; }
+    h+='<div class="mblock"><div class="mhead"><b>'+(m+1)+'. měsíc</b><span>'+c+' / 30</span></div><div class="grid">';
+    for(var i=1;i<=30;i++){
+      var n=m*30+i, rec=r.days[String(n)], cls="bub";
+      if(weekendOn(r.startDate,n)) cls+=" we";
+      if(rec&&rec.done) cls+=" done";
+      if(!(rec&&rec.done)&&n>r.lastDay) cls+=" future";
+      h+='<div class="'+cls+'">'+n+'</div>';
+    }
+    h+='</div></div>';
+  }
+  return h;
+}
+function viewHistDetail(r){
+  var h='<button class="btn quiet" style="text-align:left;padding:4px 0 8px" data-act="histclose">‹ Historie</button>';
+
+  h+='<div class="finale" style="padding:10px 0 4px"><div class="num">'+r.done+
+     '<span style="font-size:26px;color:var(--label-3)">/90</span></div>'+
+     '<div class="lab">'+(r.completed?"Výzva dokončena":"Výzva nedokončena")+'</div>'+
+     '<div class="lab" style="margin-top:2px">'+shortDate(r.startDate)+' – '+shortDate(r.endDate)+'</div></div>';
+  h+='<div class="stats"><div class="stat"><b>'+r.done+'</b><span>splněno</span></div>'+
+     '<div class="stat"><b>'+r.best+'</b><span>nejdelší série</span></div>'+
+     '<div class="stat"><b>'+r.missed+'</b><span>zmeškáno</span></div></div>';
+  h+='<h2>Cíl, se kterým jsem začínal</h2><div class="card"><p class="body">'+esc(r.setup.goal)+'</p></div>';
+  h+='<div class="card"><p class="kicker">Proč jsem to dělal</p><p class="body">'+esc(r.setup.why)+'</p></div>';
+  h+='<h2>Denní aktivity</h2><div class="list">'+
+     r.setup.acts.map(function(a,ix){
+       return '<div class="item"><div class="actnum">'+(ix+1)+'</div><div class="lead"><b>'+esc(a)+'</b></div></div>';
+     }).join("")+'</div>';
+  h+='<h2>Odměny a trest</h2><div class="list">'+
+     '<div class="item"><div class="lead"><b>'+esc(r.setup.rw)+'</b><span>Týdenní odměna</span></div></div>'+
+     '<div class="item"><div class="lead"><b>'+esc(r.setup.rm)+'</b><span>Měsíční odměna</span></div></div>'+
+     '<div class="item"><div class="lead"><b>'+esc(r.setup.rf)+'</b><span>Za dokončení</span></div></div>'+
+     '<div class="item"><div class="lead"><b>'+esc(r.setup.pen)+'</b><span>Trest za nedokončení</span></div></div>'+
+     '</div>';
+  h+='<h2>Průběh</h2>'+histGrid(r);
+  h+='<button class="btn quiet danger" style="margin-top:22px" data-act="histdel" data-id="'+r.id+'">Smazat z historie</button>';
+  return h;
+}
+
+/* ---- Finále ---- */
+function viewFinale(){
+  var c=doneCount(), ok=finalEarned(), h='';
+  h+='<div class="finale"><div class="num">'+c+'<span style="font-size:26px;color:var(--label-3)">/90</span></div>'+
+     '<div class="lab">'+(ok?"Výzva dokončena.":"Výzva skončila.")+'</div></div>';
+
+  if(ok){
+    h+='<div class="card" style="background:rgba(48,209,88,.12);margin-top:20px">'+
+       '<p class="kicker">Zasloužená odměna</p><p class="body">'+esc(DB.setup.rf)+'</p></div>';
+    if(!DB.claimed.final) h+='<button class="btn" style="margin-top:12px" data-act="claim" data-id="final">Vyzvednout odměnu</button>';
+  }else{
+    h+='<div class="card" style="margin-top:20px"><p class="kicker">Zmeškané dny</p>'+
+       '<p class="body">'+missed()+'</p></div>';
+    h+='<div class="card" style="background:rgba(255,69,58,.12)"><p class="kicker">Co sis stanovil</p>'+
+       '<p class="body">'+esc(DB.setup.pen)+'</p></div>';
+  }
+  h+='<div class="card" style="margin-top:12px"><p class="kicker">Cíl, se kterým jsi začínal</p>'+
+     '<p class="body">'+esc(DB.setup.goal)+'</p></div>';
+  h+='<button class="btn" style="margin-top:22px" data-act="again">Uložit do historie a začít novou</button>';
+  h+='<p class="note">Tahle výzva se i s cíli a odměnami přesune do Historie. Odtud se k ní kdykoli vrátíš.</p>';
+  return h;
+}
+
+/* ============ sheet ============ */
+var LBL={goal:"Cíl na 90 dní",why:"Proč to dokončím",a0:"1. aktivita",a1:"2. aktivita",a2:"3. aktivita",
+  rw:"Týdenní odměna",rm:"Měsíční odměna",rf:"Odměna za dokončení",pen:"Trest za nedokončení"};
+function getVal(k){
+  if(k[0]==="a"&&k.length===2) return DB.setup.acts[+k[1]];
+  return DB.setup[k];
+}
+function setVal(k,v){
+  if(k[0]==="a"&&k.length===2) DB.setup.acts[+k[1]]=v; else DB.setup[k]=v;
+}
+function openSheet(html){
+  var sh=document.getElementById("sheet");
+  sh.innerHTML='<div class="grab"></div>'+html;
+  document.getElementById("scrim").classList.add("on");
+  requestAnimationFrame(function(){ sh.classList.add("on"); });
+}
+function closeSheet(){
+  document.getElementById("sheet").classList.remove("on");
+  document.getElementById("scrim").classList.remove("on");
+}
+function sheetEdit(k){
+  var big=(k==="goal"||k==="why"||k==="pen");
+  openSheet('<h3 style="margin-bottom:12px">'+LBL[k]+'</h3>'+
+    (big?'<textarea class="field" id="ed">'+esc(getVal(k))+'</textarea>'
+        :'<input class="field" id="ed" value="'+esc(getVal(k))+'">')+
+    '<button class="btn" style="margin-top:14px" data-act="edsave" data-k="'+k+'">Uložit</button>'+
+    '<button class="btn quiet" data-act="close">Zrušit</button>');
+  setTimeout(function(){ var e=document.getElementById("ed"); if(e) e.focus(); },140);
+}
+function sheetBackup(){
+  var txt=JSON.stringify(DB);
+  openSheet('<h3 style="margin-bottom:6px">Záloha a obnovení</h3>'+
+    '<p class="note" style="margin:0 0 12px">Zkopíruj si text níž třeba do Poznámek. Vložením jiné zálohy se současná data přepíšou.</p>'+
+    '<textarea class="field" id="bk" style="min-height:130px;font-size:12px">'+esc(txt)+'</textarea>'+
+    '<button class="btn" style="margin-top:12px" data-act="bkcopy">Zkopírovat zálohu</button>'+
+    '<button class="btn ghost" style="margin-top:10px" data-act="bkload">Obnovit z vloženého textu</button>'+
+    '<p class="note" id="bkmsg"></p>'+
+    '<button class="btn quiet" data-act="close">Zavřít</button>');
+}
+function sheetReset(){
+  openSheet('<h3 style="margin-bottom:6px">Ukončit výzvu?</h3>'+
+    '<p class="note" style="margin:0 0 16px">Běžící výzva skončí a spustí se průvodce novou. Můžeš si ji nechat uložit do Historie i s cíli a odměnami.</p>'+
+    '<button class="btn" data-act="reset-archive">Uložit do historie a začít znovu</button>'+
+    '<button class="btn ghost" style="margin-top:10px;color:var(--bad)" data-act="reset2">Smazat bez uložení</button>'+
+    '<button class="btn quiet" data-act="close">Nechat běžet</button>');
+}
+function sheetHistDel(id){
+  openSheet('<h3 style="margin-bottom:6px">Smazat z historie?</h3>'+
+    '<p class="note" style="margin:0 0 16px">Záznam téhle výzvy zmizí natrvalo.</p>'+
+    '<button class="btn" style="background:var(--bad);color:#fff" data-act="histdel2" data-id="'+id+'">Ano, smazat</button>'+
+    '<button class="btn quiet" data-act="close">Nechat být</button>');
+}
+
+/* ============ akce ============ */
+function markDay(n,on){
+  var rec=dayRec(n);
+  rec.done=on;
+  if(on){ rec.acts=[true,true,true]; }
+  else { rec.acts=[false,false,false]; }
+}
+function afterDayDone(n){
+  buzz(18);
+  var w=Math.ceil(n/7), m=Math.floor((n-1)/30);
+  if(n===90&&finalEarned()){
+    cheer("90 dní. Hotovo.","Odměnu sis zasloužil: "+DB.setup.rf,4600,true); return;
+  }
+  if(monthEarned(m)&&!DB.claimed["m"+m]){
+    cheer((m+1)+". měsíc splněný!",DB.setup.rm,3600,true); return;
+  }
+  if(weekEarned(w)&&!DB.claimed["w"+w]){
+    cheer(w+". týden splněný!",DB.setup.rw,3200,false); return;
+  }
+  cheer("Den "+n+" hotový","Zbývá "+nPl(90-n,"den","dny","dní"),1700,false);
+}
+
+function onAct(a,el){
+  var cur=currentDay();
+
+  if(a==="tab"){ DB.tab=el.getAttribute("data-tab"); DB.histOpen=null; saveNow(); render(); return; }
+
+  if(a==="tog"){
+    var ix=+el.getAttribute("data-i"), rec=dayRec(cur);
+    rec.acts[ix]=!rec.acts[ix];
+    var all=rec.acts.every(Boolean);
+    var was=rec.done;
+    rec.done=all;
+    saveNow(); render();
+    if(all&&!was) afterDayDone(cur);
+    else buzz(8);
+    return;
+  }
+
+  if(a==="skipwe"){
+    markDay(cur,true); saveNow(); render(); afterDayDone(cur); return;
+  }
+
+  if(a==="bub"){
+    var n=+el.getAttribute("data-n");
+    if(n>cur){ buzz(30); return; }
+    var on=!isDone(n);
+    markDay(n,on); saveNow(); render();
+    if(on) afterDayDone(n); else buzz(8);
+    return;
+  }
+
+  if(a==="claim"){
+    DB.claimed[el.getAttribute("data-id")]=true; saveNow(); render();
+    cheer("Užij si to","Odměna je odškrtnutá.",2000,false); return;
+  }
+
+  if(a==="edit"){ sheetEdit(el.getAttribute("data-k")); return; }
+  if(a==="edsave"){
+    var k=el.getAttribute("data-k"), v=document.getElementById("ed").value.trim();
+    if(v){ setVal(k,v); saveNow(); }
+    closeSheet(); render(); return;
+  }
+  if(a==="close"){ closeSheet(); return; }
+  if(a==="backup"){ sheetBackup(); return; }
+  if(a==="bkcopy"){
+    var t=document.getElementById("bk");
+    try{
+      t.select(); t.setSelectionRange(0,999999);
+      if(navigator.clipboard) navigator.clipboard.writeText(t.value);
+      else document.execCommand("copy");
+      document.getElementById("bkmsg").textContent="Zkopírováno.";
+    }catch(e){ document.getElementById("bkmsg").textContent="Zkopíruj to ručně, výběr textu se nepovedl."; }
+    return;
+  }
+  if(a==="bkload"){
+    var msg=document.getElementById("bkmsg");
+    try{
+      var o=JSON.parse(document.getElementById("bk").value);
+      if(!o||typeof o!=="object"||!o.setup||!o.startDate) throw new Error("bad");
+      DB=o; if(!DB.claimed) DB.claimed={}; if(!DB.days) DB.days={}; if(!Array.isArray(DB.archive)) DB.archive=[];
+      saveNow(); closeSheet(); render();
+    }catch(e){ msg.textContent="Tohle není platná záloha. Vlož celý text včetně složených závorek."; }
+    return;
+  }
+  if(a==="reset"){ sheetReset(); return; }
+  if(a==="again"||a==="reset-archive"){ restart(true); closeSheet(); render(); return; }
+  if(a==="reset2"){ restart(false); closeSheet(); render(); return; }
+
+  if(a==="tabhist"){ DB.showHist=true; DB.histOpen=null; saveNow(); render(); return; }
+  if(a==="histback"){ DB.showHist=false; DB.histOpen=null; saveNow(); render(); return; }
+  if(a==="histopen"){ DB.histOpen=el.getAttribute("data-id"); saveNow(); render(); return; }
+  if(a==="histclose"){ DB.histOpen=null; saveNow(); render(); return; }
+  if(a==="histdel"){ sheetHistDel(el.getAttribute("data-id")); return; }
+  if(a==="histdel2"){
+    var id=el.getAttribute("data-id");
+    DB.archive=(DB.archive||[]).filter(function(x){ return x.id!==id; });
+    DB.histOpen=null; saveNow(); closeSheet(); render(); return;
+  }
+}
+
+/* ============ render ============ */
+function render(){
+  if(!DB.setup||!DB.startDate){
+    if(DB.showHist){
+      var app=document.getElementById("app");
+      app.className="";
+      app.innerHTML='<main id="main" style="padding-bottom:calc(env(safe-area-inset-bottom) + 40px)">'+
+        (DB.histOpen?'':'<button class="btn quiet" style="text-align:left;padding:4px 0 8px" data-act="histback">‹ Zpět na start</button>')+
+        viewHistorie()+'</main>';
+      return;
+    }
+    renderWizard(); return;
+  }
+  DB.showHist=false;
+  var t=DB.tab||"dnes", h;
+  if(t==="progres") h=viewProgres();
+  else if(t==="vize") h=viewVize();
+  else if(t==="historie") h=viewHistorie();
+  else h=viewDnes();
+  shell(h,t);
+}
+function boot(){ render(); }
+
+/* ============ události ============ */
+document.addEventListener("click",function(ev){
+  var t=ev.target;
+  var w=t.closest?t.closest("[data-w]"):null;
+  if(w){ wizAct(w.getAttribute("data-w")); return; }
+  var tab=t.closest?t.closest("[data-tab]"):null;
+  if(tab){ onAct("tab",tab); return; }
+  var a=t.closest?t.closest("[data-act]"):null;
+  if(a){ onAct(a.getAttribute("data-act"),a); return; }
+  if(t.id==="scrim") closeSheet();
+});
+document.addEventListener("input",function(ev){
+  if(!DB||DB.setup) return;                       /* mimo pruvodce se draft nemeni */
+  var el=ev.target;
+  if(!el.getAttribute) return;
+  var k=el.getAttribute("data-k");
+  var ai=el.getAttribute("data-act-i");
+  if(ai!==null&&ai!==""&&ai!==undefined) DB.draft.acts[+ai]=el.value;
+  else if(k) DB.draft[k]=el.value;
+  else return;
+  save();
+  var btn=document.querySelector('[data-w="next"]');
+  if(btn){ if(stepValid(DB.step)) btn.removeAttribute("disabled"); else btn.setAttribute("disabled",""); }
+});
+document.addEventListener("keydown",function(ev){
+  if(ev.key==="Escape") closeSheet();
+});
+/* Po půlnoci nebo návratu do appky přepočítat aktuální den. */
+document.addEventListener("visibilitychange",function(){
+  if(!document.hidden&&booted&&DB&&DB.setup) render();
+});
+
+/* Offline rezim. Registruje se jen na hostovanem https, jinde se preskoci. */
+(function(){
+  try{
+    if(!("serviceWorker" in navigator)) return;
+    if(location.protocol!=="https:" && location.hostname!=="localhost") return;
+    window.addEventListener("load",function(){
+      navigator.serviceWorker.register("./sw.js").catch(function(){});
+    });
+  }catch(e){}
+})();
+
+/* ============ start ============ */
+(async function(){
+  var saved=await store.get();
+  DB=saved&&typeof saved==="object"?saved:fresh();
+  if(!DB.draft) DB.draft=fresh().draft;
+  if(!DB.draft.acts||DB.draft.acts.length!==3) DB.draft.acts=["","",""];
+  if(!DB.days) DB.days={};
+  if(!DB.claimed) DB.claimed={};
+  if(!Array.isArray(DB.archive)) DB.archive=[];
+  if(typeof DB.step!=="number") DB.step=0;
+  booted=true;
+  render();
+})();
+window.addEventListener("beforeunload",function(){ if(booted) saveNow(); });
+})();
+</script>
+</body>
+</html>
