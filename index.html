@@ -164,20 +164,51 @@ textarea.field{min-height:150px}
   transition:background .18s ease,color .18s ease,transform .18s ease;
 }
 .bub::after{content:"";position:absolute;left:50%;top:50%;width:38px;height:38px;transform:translate(-50%,-50%)}
-.bub.we{box-shadow:inset 0 0 0 1px var(--hairline);background:transparent}
+.bub.rest{background:transparent;box-shadow:inset 0 0 0 1px rgba(84,84,88,.32);
+  color:var(--label-3);opacity:.5;font-weight:400;cursor:default}
+/* víkend je přeškrtnutý – je mimo výzvu */
+.bub.rest::before{
+  content:"";position:absolute;left:8%;right:8%;top:50%;height:1.5px;
+  background:var(--label-3);border-radius:1px;
+  transform:translateY(-50%) rotate(-40deg);
+}
 .bub.done{background:var(--accent);color:#000;font-weight:600}
-.bub.done.we{background:var(--accent-soft);color:var(--accent);box-shadow:none}
 .bub.today{box-shadow:0 0 0 2px var(--label)}
 .bub.future{color:var(--label-3);opacity:.55}
 button.bub:active{transform:scale(.88)}
 div.bub{cursor:default}
 .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--label-2);margin-top:16px}
-.legend i{width:11px;height:11px;border-radius:50%;display:inline-block;vertical-align:-1px;margin-right:5px}
+.legend i{width:11px;height:11px;border-radius:50%;display:inline-block;vertical-align:-1px;margin-right:5px;position:relative}
+.legend i.rest::before{content:"";position:absolute;left:-1px;right:-1px;top:50%;height:1px;
+  background:var(--label-3);transform:translateY(-50%) rotate(-40deg)}
 
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:18px 0 4px}
 .stat{background:var(--surface);border-radius:14px;padding:13px 11px}
-.stat b{display:block;font-size:21px;letter-spacing:-.5px}
-.stat span{display:block;font-size:12px;color:var(--label-2);margin-top:2px}
+.stat b{display:block;font-size:21px;letter-spacing:-.5px;white-space:nowrap}
+.stat > span{display:block;font-size:12px;color:var(--label-2);margin-top:2px}
+.stat b span{display:inline;margin:0}
+
+/* ---------- nápady ---------- */
+.addrow{display:flex;gap:9px;align-items:stretch;margin-bottom:18px}
+.addrow .field{flex:1;min-width:0}
+.addrow .btn{flex:0 0 auto;width:auto;padding:14px 17px}
+.idea{display:flex;align-items:stretch;background:var(--surface);border-radius:16px;overflow:hidden}
+.idea + .idea{margin-top:9px}
+.ideamain{flex:1;display:flex;align-items:center;gap:13px;text-align:left;
+  padding:15px 6px 15px 16px;min-width:0;transition:background .18s ease}
+.ideamain:active{background:var(--surface-2)}
+.idea .txt{flex:1;font-size:16px;line-height:1.35;min-width:0;word-break:break-word}
+.idea.on .txt{color:var(--label-2);text-decoration:line-through;text-decoration-color:var(--label-3)}
+.idea.on .tick{background:var(--good);border-color:var(--good);transform:scale(1.05)}
+.idea.on .tick svg{opacity:1}
+.idead{flex:0 0 46px;display:flex;align-items:center;justify-content:center;
+  color:var(--label-3);font-size:21px;line-height:1;transition:color .18s ease}
+.idead:active{color:var(--bad)}
+.idea .ask{flex:1;display:flex;align-items:center;padding:15px 6px 15px 16px;
+  font-size:15px;color:var(--label-2);min-width:0}
+.idea .ask b{color:var(--label);font-weight:500}
+.ideabtn{flex:0 0 auto;padding:0 14px;font-size:15px;font-weight:600;color:var(--label-2)}
+.ideabtn.yes{color:var(--bad)}
 
 /* ---------- seznamy ---------- */
 .list{background:var(--surface);border-radius:var(--r);overflow:hidden}
@@ -201,7 +232,8 @@ nav{
   box-shadow:inset 0 .5px 0 var(--hairline);
 }
 nav button{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:3px;font-size:10px;color:var(--label-3);letter-spacing:0;min-width:0}
+  gap:3px;font-size:9.5px;color:var(--label-3);letter-spacing:-.1px;min-width:0}
+@media (max-width:340px){ nav button{font-size:9px} }
 nav button span{white-space:nowrap}
 nav button.on{color:var(--accent)}
 
@@ -284,6 +316,8 @@ function fresh(){
     days:{},          /* "12": {done:true, acts:[true,true,false]} */
     claimed:{},       /* "w3":true, "m1":true, "final":true */
     draft:{goal:"",why:"",acts:["","",""],rw:"",rm:"",rf:"",pen:""},
+    ideas:[],         /* fronta vizí na další výzvy */
+    ideaDel:null,
     step:0,
     tab:"dnes"
   };
@@ -321,16 +355,19 @@ function readRec(n){
   return DB.days[String(n)]||{done:false,acts:[false,false,false]};
 }
 function isDone(n){ var d=DB.days[String(n)]; return !!(d&&d.done); }
-function doneCount(){ var c=0; for(var n=1;n<=90;n++) if(isDone(n)) c++; return c; }
-function doneInMonth(m){ var c=0; for(var i=1;i<=30;i++) if(isDone(m*30+i)) c++; return c; }
+/* Vikendy jsou automaticky volne: nepocitaji se ani do splnenych, ani do zmeskanych. */
+function activeTotal(){ var c=0; for(var n=1;n<=90;n++) if(!isWeekend(n)) c++; return c; }
+function activeInMonth(m){ var c=0; for(var i=1;i<=30;i++) if(!isWeekend(m*30+i)) c++; return c; }
+function doneCount(){ var c=0; for(var n=1;n<=90;n++) if(isDone(n)&&!isWeekend(n)) c++; return c; }
+function doneInMonth(m){ var c=0,n; for(var i=1;i<=30;i++){ n=m*30+i; if(isDone(n)&&!isWeekend(n)) c++; } return c; }
 
-/* Série: víkend nepřerušuje, dnešek se nepočítá jako selhání, dokud trvá. */
+/* Série: víkend se přeskakuje, dnešek se nepočítá jako selhání, dokud trvá. */
 function streak(){
   var cur=Math.min(currentDay(),90), s=0;
   for(var n=cur;n>=1;n--){
+    if(isWeekend(n)) continue;
     if(isDone(n)){ s++; continue; }
     if(n===cur) continue;
-    if(isWeekend(n)) continue;
     break;
   }
   return s;
@@ -338,8 +375,8 @@ function streak(){
 function bestStreak(){
   var best=0,s=0,cur=Math.min(currentDay(),90);
   for(var n=1;n<=cur;n++){
+    if(isWeekend(n)) continue;
     if(isDone(n)) s++;
-    else if(isWeekend(n)) continue;
     else { if(s>best) best=s; s=0; }
   }
   return s>best?s:best;
@@ -389,13 +426,23 @@ function allRequiredDone(){
 /* Vyzva je u konce, kdyz uplynul 90. den, nebo kdyz uz neni co odskrtnout. */
 function challengeOver(){
   var c=currentDay();
-  return c>90 || doneCount()===90 || (c>=90 && allRequiredDone());
+  return c>90 || doneCount()>=activeTotal() || (c>=90 && allRequiredDone());
 }
 function finalEarned(){ return challengeOver() && allRequiredDone(); }
 
 /* Datum n-teho dne libovolne vyzvy, i archivovane. */
 function dayOn(startDate,n){ var d=parseISO(startDate); d.setDate(d.getDate()+(n-1)); return d; }
 function weekendOn(startDate,n){ var w=dayOn(startDate,n).getDay(); return w===0||w===6; }
+/* Kolik dnu mela archivovana vyzva odpracovat a kolik jich je odskrtnutych. */
+function archActive(r){
+  if(typeof r.activeTotal==="number") return r.activeTotal;
+  var c=0; for(var n=1;n<=90;n++) if(!weekendOn(r.startDate,n)) c++; return c;
+}
+function archDone(r){
+  var c=0,d0;
+  for(var n=1;n<=90;n++){ d0=r.days[String(n)]; if(d0&&d0.done&&!weekendOn(r.startDate,n)) c++; }
+  return c;
+}
 function shortDate(isoStr){ var d=parseISO(isoStr); return d.getDate()+". "+(d.getMonth()+1)+". "+d.getFullYear(); }
 
 /* Ulozi bezici vyzvu do historie i s cili, odmenami a odskrtanymi dny. */
@@ -410,6 +457,7 @@ function archiveCurrent(){
     setup:JSON.parse(JSON.stringify(DB.setup)),
     days:JSON.parse(JSON.stringify(DB.days)),
     done:doneCount(),
+    activeTotal:activeTotal(),
     missed:missed(),
     best:bestStreak(),
     completed:finalEarned()
@@ -421,9 +469,10 @@ function archiveCurrent(){
 /* Nova vyzva - historie zustava. */
 function restart(withArchive){
   if(withArchive) archiveCurrent();
-  var arch=DB.archive||[];
+  var arch=DB.archive||[], ideas=DB.ideas||[];
   DB=fresh();
   DB.archive=arch;
+  DB.ideas=ideas;          /* fronta nápadů přežívá i novou výzvu */
   saveNow();
 }
 function pendingRewards(){
@@ -441,7 +490,8 @@ var IC={
   today:'<svg width="23" height="23" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 7.5V12l3 1.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
   grid:'<svg width="23" height="23" viewBox="0 0 24 24" fill="none"><circle cx="7" cy="7" r="2.6" stroke="currentColor" stroke-width="1.7"/><circle cx="17" cy="7" r="2.6" stroke="currentColor" stroke-width="1.7"/><circle cx="7" cy="17" r="2.6" stroke="currentColor" stroke-width="1.7"/><circle cx="17" cy="17" r="2.6" stroke="currentColor" stroke-width="1.7"/></svg>',
   star:'<svg width="23" height="23" viewBox="0 0 24 24" fill="none"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9-5.2-2.8-5.2 2.8 1-5.9L3.5 9.7l5.9-.8L12 3.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>',
-  hist:'<svg width="23" height="23" viewBox="0 0 24 24" fill="none"><rect x="3.2" y="4.2" width="17.6" height="4.4" rx="1.6" stroke="currentColor" stroke-width="1.7"/><path d="M5 8.6v9.6a2 2 0 002 2h10a2 2 0 002-2V8.6" stroke="currentColor" stroke-width="1.7"/><path d="M9.8 12.6h4.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>'
+  hist:'<svg width="23" height="23" viewBox="0 0 24 24" fill="none"><rect x="3.2" y="4.2" width="17.6" height="4.4" rx="1.6" stroke="currentColor" stroke-width="1.7"/><path d="M5 8.6v9.6a2 2 0 002 2h10a2 2 0 002-2V8.6" stroke="currentColor" stroke-width="1.7"/><path d="M9.8 12.6h4.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>',
+  bulb:'<svg width="23" height="23" viewBox="0 0 24 24" fill="none"><path d="M12 3.2a6 6 0 00-3.5 10.9c.5.4.9 1 .9 1.7v.3h5.2v-.3c0-.7.4-1.3.9-1.7A6 6 0 0012 3.2z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M9.9 18.5h4.2M10.8 20.9h2.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>'
 };
 
 /* ============ oslava ============ */
@@ -517,7 +567,7 @@ var STEPS=[
    h:"K tomuhle se budeš vracet ve dnech, kdy se ti nebude chtít. Piš na tělo.",
    ph:"Protože…", area:true},
   {k:"acts",  q:"Které tři věci budeš dělat každý den?",
-   h:"Malé kroky, které zvládneš i ve špatný den. Víkendy jsou dobrovolné.",
+   h:"Malé kroky, které zvládneš i ve špatný den. O víkendech máš automaticky volno.",
    ph:""},
   {k:"rw",    q:"Jak se odměníš po každém splněném týdnu?",
    h:"Něco malého a hmatatelného, co si dopřeješ hned.", ph:"Např. oblíbená večeře venku"},
@@ -554,8 +604,12 @@ function renderWizard(){
       '<h1 class="introtitle">90days<br>challenge 🔥</h1>'+
       '<p class="introlead">Pro každého, kdo chce od života mnohem více než jen průměr.</p>'+
       '<button class="btn" style="margin-top:34px" data-w="next">Začít výzvu</button>'+
+      '<button class="btn quiet" style="margin-top:6px" data-act="tabideas">'+
+        ((DB.ideas&&DB.ideas.length)
+          ? 'Nápady · '+nPl(DB.ideas.length,"vize","vize","vizí")
+          : 'Nápady na další výzvy')+'</button>'+
       ((DB.archive&&DB.archive.length)
-        ? '<button class="btn quiet" style="margin-top:4px" data-act="tabhist">Historie · '+
+        ? '<button class="btn quiet" style="margin-top:0" data-act="tabhist">Historie · '+
           nPl(DB.archive.length,"uzavřená výzva","uzavřené výzvy","uzavřených výzev")+'</button>'
         : '')+
       '</div>';
@@ -634,6 +688,7 @@ function shell(inner,tab){
       tabBtn("dnes","Dnes",IC.today,tab)+
       tabBtn("progres","Progres",IC.grid,tab)+
       tabBtn("vize","Vize",IC.star,tab)+
+      tabBtn("napady","Nápady",IC.bulb,tab)+
       tabBtn("historie","Historie",IC.hist,tab)+
     '</nav>';
 }
@@ -647,30 +702,43 @@ function viewDnes(){
   if(challengeOver()) return viewFinale();
 
   var rec=readRec(cur), we=isWeekend(cur), d=dateOfDay(cur);
-  var pct=doneCount()/90;
+  var tot=activeTotal(), done=doneCount();
+  var pct=tot?done/tot:0;
   var h='';
 
-  h+='<h1>Den '+cur+'</h1>';
-  h+='<p class="sub">'+humanDate(d)+' &nbsp;·&nbsp; zbývá '+nPl(90-cur+1,"den","dny","dní")+'</p>';
+  if(we){
+    h+='<h1>Volno</h1>';
+    h+='<p class="sub">'+humanDate(d)+' &nbsp;·&nbsp; den '+cur+' z 90</p>';
+  }else{
+    h+='<h1>Den '+cur+'</h1>';
+    h+='<p class="sub">'+humanDate(d)+' &nbsp;·&nbsp; zbývá '+nPl(90-cur+1,"den","dny","dní")+'</p>';
+  }
 
-  h+='<div class="hero">'+ring(pct,doneCount(),"z 90 dní")+
+  h+='<div class="hero">'+ring(pct,done,"z "+tot+" dní")+
      '<div class="herotxt">'+
        '<span class="big">'+nPl(streak(),"den","dny","dní")+' v řadě</span>'+
        '<span class="small">Nejdelší série '+bestStreak()+' · Zmeškáno '+missed()+'</span>'+
-       (we?'<span style="display:inline-block;margin-top:9px" class="badge grey">Víkend — dobrovolné</span>':'')+
+       (we?'<span style="display:inline-block;margin-top:9px" class="badge grey">Víkend</span>':'')+
      '</div></div>';
 
-  h+='<h2>Dnešní tři kroky</h2>';
-  h+=DB.setup.acts.map(function(a,ix){
-    return '<button class="act'+(rec.acts[ix]?" on":"")+'" data-act="tog" data-i="'+ix+'">'+
-      '<span class="tick">'+IC.check+'</span><span class="txt">'+esc(a)+'</span></button>';
-  }).join("");
-
-  if(rec.done){
-    h+='<div class="card" style="margin-top:12px;background:rgba(48,209,88,.12)">'+
-       '<p class="body" style="color:var(--good)">Den '+cur+' je odškrtnutý. Hotovo.</p></div>';
-  }else if(we){
-    h+='<button class="btn ghost" style="margin-top:12px" data-act="skipwe">Dnes je víkend, přeskočit</button>';
+  if(we){
+    h+='<div class="card" style="margin-top:20px"><p class="kicker">Dnes nic neodškrtáváš</p>'+
+       '<p class="body">Víkendy jsou z výzvy vynechané automaticky. Sérii ti to nepřeruší a mezi zmeškané dny se to nepočítá. Pokračuješ '+
+       (d.getDay()===6?'v pondělí.':'zítra.')+'</p></div>';
+    h+='<h2>Na co se chystáš</h2><div class="list">'+
+       DB.setup.acts.map(function(a,ix){
+         return '<div class="item"><div class="actnum">'+(ix+1)+'</div><div class="lead"><b>'+esc(a)+'</b></div></div>';
+       }).join("")+'</div>';
+  }else{
+    h+='<h2>Dnešní tři kroky</h2>';
+    h+=DB.setup.acts.map(function(a,ix){
+      return '<button class="act'+(rec.acts[ix]?" on":"")+'" data-act="tog" data-i="'+ix+'">'+
+        '<span class="tick">'+IC.check+'</span><span class="txt">'+esc(a)+'</span></button>';
+    }).join("");
+    if(rec.done){
+      h+='<div class="card" style="margin-top:12px;background:rgba(48,209,88,.12)">'+
+         '<p class="body" style="color:var(--good)">Den '+cur+' je odškrtnutý. Hotovo.</p></div>';
+    }
   }
 
   var pend=pendingRewards();
@@ -702,20 +770,26 @@ function nextRewardCard(){
 function viewProgres(){
   var cur=currentDay(), h='';
   h+='<h1>Progres</h1>';
-  h+='<p class="sub">Ťukni na den a odškrtni ho. Budoucí dny zamčené.</p>';
+  h+='<p class="sub">Ťukni na den a odškrtni ho. Víkendy jsou volné automaticky.</p>';
 
+  var tot=activeTotal(), done=doneCount();
   h+='<div class="stats">'+
-    '<div class="stat"><b>'+doneCount()+'</b><span>splněno</span></div>'+
+    '<div class="stat"><b>'+done+'<span style="font-size:13px;color:var(--label-3)">/'+tot+'</span></b><span>splněno</span></div>'+
     '<div class="stat"><b>'+streak()+'</b><span>v řadě</span></div>'+
-    '<div class="stat"><b>'+Math.round(doneCount()/90*100)+' %</b><span>hotovo</span></div>'+
+    '<div class="stat"><b>'+(tot?Math.round(done/tot*100):0)+' %</b><span>hotovo</span></div>'+
     '</div>';
 
   for(var m=0;m<3;m++){
     h+='<div class="mblock"><div class="mhead"><b>'+(m+1)+'. měsíc</b>'+
-       '<span>'+doneInMonth(m)+' / 30</span></div><div class="grid">';
+       '<span>'+doneInMonth(m)+' / '+activeInMonth(m)+'</span></div><div class="grid">';
     for(var i=1;i<=30;i++){
       var n=m*30+i, c="bub";
-      if(isWeekend(n)) c+=" we";
+      if(isWeekend(n)){
+        c+=" rest";
+        if(n===cur) c+=" today";
+        h+='<div class="'+c+'" title="Víkend – volno">'+n+'</div>';
+        continue;
+      }
       if(isDone(n)) c+=" done";
       if(n===cur) c+=" today";
       if(n>cur) c+=" future";
@@ -726,8 +800,8 @@ function viewProgres(){
 
   h+='<div class="legend">'+
      '<span><i style="background:var(--accent)"></i>splněno</span>'+
-     '<span><i style="background:var(--surface)"></i>všední den</span>'+
-     '<span><i style="box-shadow:inset 0 0 0 1px var(--hairline)"></i>víkend, dobrovolný</span>'+
+     '<span><i style="background:var(--surface)"></i>zbývá</span>'+
+     '<span><i class="rest" style="box-shadow:inset 0 0 0 1px var(--hairline);opacity:.6"></i>víkend, volno</span>'+
      '<span><i style="background:var(--surface);box-shadow:0 0 0 2px #fff"></i>dnes</span>'+
      '</div>';
   h+='<p class="note">O výsledku nerozhodne jeden velký den, ale devadesát obyčejných.</p>';
@@ -784,15 +858,54 @@ function rewRow(t,txt,kind){
     st=weekDone(w)+"/"+weekReq(w)+" v "+w+". týdnu";
   }else if(kind==="m"){
     var m=Math.min(2,Math.floor((Math.min(currentDay(),90)-1)/30));
-    st=doneInMonth(m)+"/30 v "+(m+1)+". měsíci";
+    st=doneInMonth(m)+"/"+activeInMonth(m)+" v "+(m+1)+". měsíci";
   }else{
-    st=doneCount()+"/90 dní";
+    st=doneCount()+"/"+activeTotal()+" dní";
   }
   return '<div class="item"><div class="lead"><b>'+esc(txt)+'</b><span>'+t+' · '+st+'</span></div></div>';
 }
 function editRow(k,t,v){
   return '<button class="item" data-act="edit" data-k="'+k+'"><div class="lead"><b>'+t+'</b>'+
     '<span>'+esc(v)+'</span></div><span class="chev">'+IC.chev+'</span></button>';
+}
+
+/* ---- Nápady ---- */
+function viewNapady(){
+  var arr=DB.ideas||[], open=0, i;
+  for(i=0;i<arr.length;i++) if(!arr[i].done) open++;
+  var h='<h1>Nápady</h1>';
+  h+='<p class="sub">'+(arr.length
+      ? nPl(open,"otevřený nápad","otevřené nápady","otevřených nápadů")+
+        (arr.length-open?' · '+(arr.length-open)+' odškrtnuto':'')
+      : 'Fronta vizí na další výzvy.')+'</p>';
+
+  h+='<div class="addrow">'+
+     '<input class="field" id="ideain" maxlength="200" autocomplete="off" '+
+     'placeholder="Nová vize na příště">'+
+     '<button class="btn" data-act="ideaadd">Přidat</button></div>';
+
+  if(!arr.length){
+    h+='<div class="card"><p class="body">Sem si piš vize na další výzvy, jak tě napadají — '+
+       'ať je máš připravené, až tahle skončí. Odškrtnout i smazat je můžeš kdykoli.</p></div>';
+    return h;
+  }
+
+  var sorted=arr.filter(function(x){return !x.done;}).concat(arr.filter(function(x){return x.done;}));
+  h+=sorted.map(function(x){
+    if(DB.ideaDel===x.id){
+      return '<div class="idea"><span class="ask">Smazat <b>'+esc(x.t)+'</b>?</span>'+
+        '<button class="ideabtn" data-act="ideadelno">Zpět</button>'+
+        '<button class="ideabtn yes" data-act="ideadelyes" data-id="'+x.id+'">Smazat</button></div>';
+    }
+    return '<div class="idea'+(x.done?' on':'')+'">'+
+      '<button class="ideamain" data-act="ideatog" data-id="'+x.id+'">'+
+        '<span class="tick">'+IC.check+'</span><span class="txt">'+esc(x.t)+'</span></button>'+
+      '<button class="idead" data-act="ideadel" data-id="'+x.id+'" aria-label="Smazat">×</button>'+
+      '</div>';
+  }).join("");
+
+  h+='<p class="note">Až tuhle výzvu uzavřeš, průvodce začne nanovo — nápady tu zůstanou.</p>';
+  return h;
 }
 
 /* ---- Historie ---- */
@@ -814,8 +927,8 @@ function viewHistorie(){
   h+='<div class="list">'+arr.map(function(r){
     return '<button class="item" data-act="histopen" data-id="'+r.id+'">'+
       '<div class="lead"><b>'+esc(r.setup.goal)+'</b>'+
-      '<span>'+shortDate(r.startDate)+' – '+shortDate(r.endDate)+' · '+r.done+'/90 dní</span></div>'+
-      '<span class="badge '+(r.completed?"green":"grey")+'">'+(r.completed?"Splněno":r.done+"/90")+'</span>'+
+      '<span>'+shortDate(r.startDate)+' – '+shortDate(r.endDate)+' · '+archDone(r)+'/'+archActive(r)+' dní</span></div>'+
+      '<span class="badge '+(r.completed?"green":"grey")+'">'+(r.completed?"Splněno":archDone(r)+"/"+archActive(r))+'</span>'+
       '</button>';
   }).join("")+'</div>';
   h+='<p class="note">Ťukni na výzvu a podívej se, co sis tehdy dal za cíl.</p>';
@@ -824,14 +937,18 @@ function viewHistorie(){
 function histGrid(r){
   var h='';
   for(var m=0;m<3;m++){
-    var c=0;
-    for(var q=1;q<=30;q++){ var d0=r.days[String(m*30+q)]; if(d0&&d0.done) c++; }
-    h+='<div class="mblock"><div class="mhead"><b>'+(m+1)+'. měsíc</b><span>'+c+' / 30</span></div><div class="grid">';
+    var c=0,act=0,q,n0,d0;
+    for(q=1;q<=30;q++){
+      n0=m*30+q; d0=r.days[String(n0)];
+      if(weekendOn(r.startDate,n0)) continue;
+      act++; if(d0&&d0.done) c++;
+    }
+    h+='<div class="mblock"><div class="mhead"><b>'+(m+1)+'. měsíc</b><span>'+c+' / '+act+'</span></div><div class="grid">';
     for(var i=1;i<=30;i++){
       var n=m*30+i, rec=r.days[String(n)], cls="bub";
-      if(weekendOn(r.startDate,n)) cls+=" we";
+      if(weekendOn(r.startDate,n)){ h+='<div class="bub rest">'+n+'</div>'; continue; }
       if(rec&&rec.done) cls+=" done";
-      if(!(rec&&rec.done)&&n>r.lastDay) cls+=" future";
+      else if(n>r.lastDay) cls+=" future";
       h+='<div class="'+cls+'">'+n+'</div>';
     }
     h+='</div></div>';
@@ -841,11 +958,11 @@ function histGrid(r){
 function viewHistDetail(r){
   var h='<button class="btn quiet" style="text-align:left;padding:4px 0 8px" data-act="histclose">‹ Historie</button>';
 
-  h+='<div class="finale" style="padding:10px 0 4px"><div class="num">'+r.done+
-     '<span style="font-size:26px;color:var(--label-3)">/90</span></div>'+
+  h+='<div class="finale" style="padding:10px 0 4px"><div class="num">'+archDone(r)+
+     '<span style="font-size:26px;color:var(--label-3)">/'+archActive(r)+'</span></div>'+
      '<div class="lab">'+(r.completed?"Výzva dokončena":"Výzva nedokončena")+'</div>'+
      '<div class="lab" style="margin-top:2px">'+shortDate(r.startDate)+' – '+shortDate(r.endDate)+'</div></div>';
-  h+='<div class="stats"><div class="stat"><b>'+r.done+'</b><span>splněno</span></div>'+
+  h+='<div class="stats"><div class="stat"><b>'+archDone(r)+'</b><span>splněno</span></div>'+
      '<div class="stat"><b>'+r.best+'</b><span>nejdelší série</span></div>'+
      '<div class="stat"><b>'+r.missed+'</b><span>zmeškáno</span></div></div>';
   h+='<h2>Cíl, se kterým jsem začínal</h2><div class="card"><p class="body">'+esc(r.setup.goal)+'</p></div>';
@@ -867,8 +984,8 @@ function viewHistDetail(r){
 
 /* ---- Finále ---- */
 function viewFinale(){
-  var c=doneCount(), ok=finalEarned(), h='';
-  h+='<div class="finale"><div class="num">'+c+'<span style="font-size:26px;color:var(--label-3)">/90</span></div>'+
+  var c=doneCount(), tot=activeTotal(), ok=finalEarned(), h='';
+  h+='<div class="finale"><div class="num">'+c+'<span style="font-size:26px;color:var(--label-3)">/'+tot+'</span></div>'+
      '<div class="lab">'+(ok?"Výzva dokončena.":"Výzva skončila.")+'</div></div>';
 
   if(ok){
@@ -966,9 +1083,10 @@ function afterDayDone(n){
 function onAct(a,el){
   var cur=currentDay();
 
-  if(a==="tab"){ DB.tab=el.getAttribute("data-tab"); DB.histOpen=null; saveNow(); render(); return; }
+  if(a==="tab"){ DB.tab=el.getAttribute("data-tab"); DB.histOpen=null; DB.ideaDel=null; saveNow(); render(); return; }
 
   if(a==="tog"){
+    if(isWeekend(cur)) return;
     var ix=+el.getAttribute("data-i"), rec=dayRec(cur);
     rec.acts[ix]=!rec.acts[ix];
     var all=rec.acts.every(Boolean);
@@ -980,13 +1098,9 @@ function onAct(a,el){
     return;
   }
 
-  if(a==="skipwe"){
-    markDay(cur,true); saveNow(); render(); afterDayDone(cur); return;
-  }
-
   if(a==="bub"){
     var n=+el.getAttribute("data-n");
-    if(n>cur){ buzz(30); return; }
+    if(n>cur||isWeekend(n)){ buzz(30); return; }
     var on=!isDone(n);
     markDay(n,on); saveNow(); render();
     if(on) afterDayDone(n); else buzz(8);
@@ -1022,6 +1136,7 @@ function onAct(a,el){
       var o=JSON.parse(document.getElementById("bk").value);
       if(!o||typeof o!=="object"||!o.setup||!o.startDate) throw new Error("bad");
       DB=o; if(!DB.claimed) DB.claimed={}; if(!DB.days) DB.days={}; if(!Array.isArray(DB.archive)) DB.archive=[];
+      if(!Array.isArray(DB.ideas)) DB.ideas=[]; DB.ideaDel=null;
       saveNow(); closeSheet(); render();
     }catch(e){ msg.textContent="Tohle není platná záloha. Vlož celý text včetně složených závorek."; }
     return;
@@ -1030,8 +1145,23 @@ function onAct(a,el){
   if(a==="again"||a==="reset-archive"){ restart(true); closeSheet(); render(); return; }
   if(a==="reset2"){ restart(false); closeSheet(); render(); return; }
 
-  if(a==="tabhist"){ DB.showHist=true; DB.histOpen=null; saveNow(); render(); return; }
-  if(a==="histback"){ DB.showHist=false; DB.histOpen=null; saveNow(); render(); return; }
+  if(a==="tabhist"){ DB.showHist=true; DB.showIdeas=false; DB.histOpen=null; saveNow(); render(); return; }
+  if(a==="tabideas"){ DB.showIdeas=true; DB.showHist=false; DB.histOpen=null; saveNow(); render(); return; }
+  if(a==="histback"){ DB.showHist=false; DB.showIdeas=false; DB.histOpen=null; saveNow(); render(); return; }
+
+  if(a==="ideaadd"){ addIdea(); return; }
+  if(a==="ideatog"){
+    var iid=el.getAttribute("data-id");
+    (DB.ideas||[]).forEach(function(x){ if(x.id===iid) x.done=!x.done; });
+    DB.ideaDel=null; saveNow(); render(); buzz(8); return;
+  }
+  if(a==="ideadel"){ DB.ideaDel=el.getAttribute("data-id"); render(); return; }
+  if(a==="ideadelno"){ DB.ideaDel=null; render(); return; }
+  if(a==="ideadelyes"){
+    var did=el.getAttribute("data-id");
+    DB.ideas=(DB.ideas||[]).filter(function(x){ return x.id!==did; });
+    DB.ideaDel=null; saveNow(); render(); buzz(14); return;
+  }
   if(a==="histopen"){ DB.histOpen=el.getAttribute("data-id"); saveNow(); render(); return; }
   if(a==="histclose"){ DB.histOpen=null; saveNow(); render(); return; }
   if(a==="histdel"){ sheetHistDel(el.getAttribute("data-id")); return; }
@@ -1042,23 +1172,41 @@ function onAct(a,el){
   }
 }
 
+/* Přidá nápad z pole a nechá kurzor tam, ať se dá psát dál. */
+function addIdea(){
+  var el=document.getElementById("ideain");
+  if(!el) return;
+  var v=el.value.trim();
+  if(!v) { el.focus(); return; }
+  if(!Array.isArray(DB.ideas)) DB.ideas=[];
+  DB.ideas.unshift({ id:"i"+Date.now()+"-"+Math.floor(Math.random()*1000), t:v, done:false });
+  DB.ideaDel=null;
+  saveNow(); render();
+  var n=document.getElementById("ideain");
+  if(n) n.focus();
+  buzz(10);
+}
+
 /* ============ render ============ */
 function render(){
   if(!DB.setup||!DB.startDate){
-    if(DB.showHist){
+    if(DB.showHist||DB.showIdeas){
       var app=document.getElementById("app");
       app.className="";
+      var inner=DB.showIdeas?viewNapady():viewHistorie();
+      var back=(DB.showIdeas||!DB.histOpen)
+        ? '<button class="btn quiet" style="text-align:left;padding:4px 0 8px" data-act="histback">‹ Zpět na start</button>' : '';
       app.innerHTML='<main id="main" style="padding-bottom:calc(env(safe-area-inset-bottom) + 40px)">'+
-        (DB.histOpen?'':'<button class="btn quiet" style="text-align:left;padding:4px 0 8px" data-act="histback">‹ Zpět na start</button>')+
-        viewHistorie()+'</main>';
+        back+inner+'</main>';
       return;
     }
     renderWizard(); return;
   }
-  DB.showHist=false;
+  DB.showHist=false; DB.showIdeas=false;
   var t=DB.tab||"dnes", h;
   if(t==="progres") h=viewProgres();
   else if(t==="vize") h=viewVize();
+  else if(t==="napady") h=viewNapady();
   else if(t==="historie") h=viewHistorie();
   else h=viewDnes();
   shell(h,t);
@@ -1090,7 +1238,8 @@ document.addEventListener("input",function(ev){
   if(btn){ if(stepValid(DB.step)) btn.removeAttribute("disabled"); else btn.setAttribute("disabled",""); }
 });
 document.addEventListener("keydown",function(ev){
-  if(ev.key==="Escape") closeSheet();
+  if(ev.key==="Escape"){ closeSheet(); return; }
+  if(ev.key==="Enter"&&ev.target&&ev.target.id==="ideain"){ ev.preventDefault(); addIdea(); }
 });
 /* Po půlnoci nebo návratu do appky přepočítat aktuální den. */
 document.addEventListener("visibilitychange",function(){
@@ -1117,6 +1266,8 @@ document.addEventListener("visibilitychange",function(){
   if(!DB.days) DB.days={};
   if(!DB.claimed) DB.claimed={};
   if(!Array.isArray(DB.archive)) DB.archive=[];
+  if(!Array.isArray(DB.ideas)) DB.ideas=[];
+  DB.ideaDel=null;
   if(typeof DB.step!=="number") DB.step=0;
   booted=true;
   render();
