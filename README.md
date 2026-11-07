@@ -46,7 +46,17 @@ Na Androidu nabídne Chrome instalaci sám, případně přes menu **Přidat na 
 
 Všechno se ukládá lokálně v prohlížeči (`localStorage`) pod klíčem `vyzva90` — běžící výzva i celá historie uzavřených výzev. Nikam se nic neodesílá.
 
-Data aplikace přidané na plochu drží iOS odděleně od Safari a nemaže je po sedmi dnech nečinnosti jako běžné weby v prohlížeči. I tak si dělej zálohu: **Vize → Záloha a obnovení** vypíše celý obsah jako text, který si zkopíruješ a v případě potřeby vložíš zpátky. Před tlačítkem *Začít novou výzvu* to udělej vždycky.
+Data aplikace přidané na plochu drží iOS odděleně od Safari a nemaže je po sedmi dnech nečinnosti jako běžné weby v prohlížeči. I tak si dělej zálohu.
+
+**Záloha a obnovení** najdeš ve **Vizi**, a mimo běžící výzvu i v **Nápadech** a **Historii**. Má tři cesty:
+
+- *Uložit zálohu do souboru* — stáhne `90days-zaloha-RRRR-MM-DD.json` s běžící výzvou, celou historií i nápady.
+- *Sdílet zálohu…* — jen tam, kde to zařízení umí (typicky iPhone); pošle soubor do systémové nabídky, odkud ho uložíš do Souborů nebo na iCloud.
+- *Zálohovat textem* — záchranná varianta, když se soubory nedaří: zkopíruješ obsah jako text.
+
+Načtení funguje přes *Načíst ze souboru*. Appka soubor nejdřív zkontroluje a ukáže, co v něm je (cíl výzvy, počet odškrtnutých dní, výzvy v historii, nápady), a teprve po potvrzení data přepíše. Přijme i starší zálohy pořízené textem. Řádek se zálohou ukazuje, kdy sis zálohoval naposled.
+
+Před tlačítkem *Začít novou výzvu* si zálohu udělej vždycky.
 
 Odinstalování aplikace z plochy data smaže.
 

@@ -250,6 +250,8 @@ nav button.on{color:var(--accent)}
 }
 #sheet.on{transform:translateY(0)}
 #sheet .grab{width:36px;height:5px;border-radius:3px;background:var(--surface-2);margin:0 auto 16px}
+/* v sheetu ma stejnou barvu jako podklad, proto o stupen vys */
+#sheet .btn.ghost{background:var(--surface-2)}
 
 /* ---------- oslava ---------- */
 #confetti{position:fixed;inset:0;width:100%;height:100%;z-index:80;pointer-events:none}
@@ -845,7 +847,8 @@ function viewVize(){
 
   h+='<div class="list" style="margin-top:10px">'+
      '<button class="item" data-act="backup"><div class="lead"><b>Záloha a obnovení</b>'+
-     '<span>Vyexportuj si data jako text</span></div><span class="chev">'+IC.chev+'</span></button>'+
+     '<span>'+(DB.backupAt?"Poslední "+shortDate(DB.backupAt):"Zatím nezálohováno")+'</span></div>'+
+     '<span class="chev">'+IC.chev+'</span></button>'+
      '<button class="item" data-act="reset"><div class="lead"><b style="color:var(--bad)">Ukončit výzvu předčasně</b>'+
      '<span>S uložením do historie, nebo bez něj</span></div></button>'+
      '</div>';
@@ -869,6 +872,14 @@ function editRow(k,t,v){
     '<span>'+esc(v)+'</span></div><span class="chev">'+IC.chev+'</span></button>';
 }
 
+/* Řádek se zálohou, ať je dosažitelná i mimo běžící výzvu. */
+function backupRow(){
+  return '<div class="list" style="margin-top:22px">'+
+    '<button class="item" data-act="backup"><div class="lead"><b>Záloha a obnovení</b>'+
+    '<span>'+(DB.backupAt?"Poslední "+shortDate(DB.backupAt):"Zatím nezálohováno")+'</span></div>'+
+    '<span class="chev">'+IC.chev+'</span></button></div>';
+}
+
 /* ---- Nápady ---- */
 function viewNapady(){
   var arr=DB.ideas||[], open=0, i;
@@ -887,6 +898,7 @@ function viewNapady(){
   if(!arr.length){
     h+='<div class="card"><p class="body">Sem si piš vize na další výzvy, jak tě napadají — '+
        'ať je máš připravené, až tahle skončí. Odškrtnout i smazat je můžeš kdykoli.</p></div>';
+    h+=backupRow();
     return h;
   }
 
@@ -905,6 +917,7 @@ function viewNapady(){
   }).join("");
 
   h+='<p class="note">Až tuhle výzvu uzavřeš, průvodce začne nanovo — nápady tu zůstanou.</p>';
+  h+=backupRow();
   return h;
 }
 
@@ -919,6 +932,7 @@ function viewHistorie(){
   if(!arr.length){
     h+='<p class="sub">Zatím prázdná.</p>'+
       '<div class="card"><p class="body">Až první výzvu uzavřeš, uloží se sem celá — cíl, důvod, denní aktivity, odměny i to, kolik dnů jsi odškrtl. Nic se nepřepisuje, každá výzva tu zůstane samostatně.</p></div>';
+    h+=backupRow();
     return h;
   }
   var fin=0;
@@ -932,6 +946,7 @@ function viewHistorie(){
       '</button>';
   }).join("")+'</div>';
   h+='<p class="note">Ťukni na výzvu a podívej se, co sis tehdy dal za cíl.</p>';
+  h+=backupRow();
   return h;
 }
 function histGrid(r){
@@ -1034,15 +1049,99 @@ function sheetEdit(k){
     '<button class="btn quiet" data-act="close">Zrušit</button>');
   setTimeout(function(){ var e=document.getElementById("ed"); if(e) e.focus(); },140);
 }
+/* ============ zálohy ============ */
+var pendingImport=null;
+
+function backupText(){
+  return JSON.stringify({ app:"90days", v:1, exportedAt:new Date().toISOString(), data:DB }, null, 2);
+}
+function backupName(){ return "90days-zaloha-"+iso(new Date())+".json"; }
+
+/* Prijme novy format i starsi zalohu, ktera byla holym objektem. */
+function parseBackup(txt){
+  var o=JSON.parse(txt);
+  if(!o||typeof o!=="object") throw new Error("bad");
+  var d=(o.app==="90days"&&o.data&&typeof o.data==="object")?o.data:o;
+  if(!d||typeof d!=="object") throw new Error("bad");
+  if(!("days" in d)&&!("setup" in d)) throw new Error("bad");
+  if(!d.claimed||typeof d.claimed!=="object") d.claimed={};
+  if(!d.days||typeof d.days!=="object") d.days={};
+  if(!Array.isArray(d.archive)) d.archive=[];
+  if(!Array.isArray(d.ideas)) d.ideas=[];
+  if(!d.draft) d.draft=fresh().draft;
+  if(typeof d.step!=="number") d.step=0;
+  d.ideaDel=null;
+  return { data:d, at:(typeof o.exportedAt==="string"?o.exportedAt.slice(0,10):null) };
+}
+function backupLines(p){
+  var d=p.data, done=0, k;
+  for(k in d.days) if(d.days[k]&&d.days[k].done) done++;
+  return [
+    (d.setup&&d.setup.goal) ? "Výzva: "+d.setup.goal : "Bez rozběhnuté výzvy",
+    nPl(done,"odškrtnutý den","odškrtnuté dny","odškrtnutých dní")+
+      " · "+nPl((d.archive||[]).length,"výzva v historii","výzvy v historii","výzev v historii")+
+      " · "+nPl((d.ideas||[]).length,"nápad","nápady","nápadů")
+  ];
+}
+function canShareFile(){
+  try{
+    if(!navigator.share||!navigator.canShare||typeof File!=="function") return false;
+    return navigator.canShare({ files:[new File(["{}"],"t.json",{type:"application/json"})] });
+  }catch(e){ return false; }
+}
+function bkMsg(t){ var m=document.getElementById("bkmsg"); if(m) m.textContent=t||""; }
+
+function saveBackupFile(){
+  try{
+    var blob=new Blob([backupText()],{type:"application/json"});
+    var url=URL.createObjectURL(blob), a=document.createElement("a");
+    a.href=url; a.download=backupName(); a.style.display="none";
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ try{ URL.revokeObjectURL(url); a.remove(); }catch(e){} },2000);
+    DB.backupAt=iso(new Date()); saveNow();
+    bkMsg("Uloženo jako "+backupName()+". Najdeš to mezi staženými soubory.");
+  }catch(e){ bkMsg("Uložení se nepovedlo. Zkus zálohu textem."); }
+}
+function shareBackupFile(){
+  try{
+    var f=new File([backupText()],backupName(),{type:"application/json"});
+    navigator.share({ files:[f], title:"Záloha 90days" }).then(function(){
+      DB.backupAt=iso(new Date()); saveNow(); bkMsg("Záloha odeslaná.");
+    }).catch(function(){});
+  }catch(e){ bkMsg("Sdílení se nepovedlo. Zkus uložit do souboru."); }
+}
+
 function sheetBackup(){
-  var txt=JSON.stringify(DB);
+  var last=DB.backupAt ? "Poslední záloha "+shortDate(DB.backupAt) : "Zatím sis nic nezálohoval";
   openSheet('<h3 style="margin-bottom:6px">Záloha a obnovení</h3>'+
-    '<p class="note" style="margin:0 0 12px">Zkopíruj si text níž třeba do Poznámek. Vložením jiné zálohy se současná data přepíšou.</p>'+
-    '<textarea class="field" id="bk" style="min-height:130px;font-size:12px">'+esc(txt)+'</textarea>'+
-    '<button class="btn" style="margin-top:12px" data-act="bkcopy">Zkopírovat zálohu</button>'+
+    '<p class="note" style="margin:0 0 16px">'+last+'. Soubor obsahuje běžící výzvu, celou historii i nápady.</p>'+
+    '<button class="btn" data-act="bksave">Uložit zálohu do souboru</button>'+
+    (canShareFile()?'<button class="btn ghost" style="margin-top:10px" data-act="bkshare">Sdílet zálohu…</button>':'')+
+    '<button class="btn ghost" style="margin-top:10px" data-act="bkpick">Načíst ze souboru</button>'+
+    '<input type="file" id="bkfile" accept="application/json,.json" style="display:none">'+
+    '<p class="note" id="bkmsg"></p>'+
+    '<button class="btn quiet" data-act="bktext">Zálohovat textem</button>'+
+    '<button class="btn quiet" data-act="close">Zavřít</button>');
+}
+function sheetBackupConfirm(){
+  var p=pendingImport, lines=backupLines(p);
+  openSheet('<h3 style="margin-bottom:6px">Nahradit data zálohou?</h3>'+
+    '<p class="note" style="margin:0 0 14px">'+
+      (p.at?"Záloha z "+shortDate(p.at)+".":"U zálohy není uvedené datum.")+
+      ' Současná výzva, historie i nápady se přepíšou. Vrátit to nejde.</p>'+
+    '<div class="card"><p class="kicker">Co je v souboru</p><p class="body">'+
+      esc(lines[0])+'\n'+esc(lines[1])+'</p></div>'+
+    '<button class="btn" style="margin-top:14px;background:var(--bad);color:#fff" data-act="bkapply">Nahradit data</button>'+
+    '<button class="btn quiet" data-act="bkcancel">Zrušit</button>');
+}
+function sheetBackupText(){
+  openSheet('<h3 style="margin-bottom:6px">Záloha textem</h3>'+
+    '<p class="note" style="margin:0 0 12px">Záchranná varianta, když se soubory nedaří. Zkopíruj text třeba do Poznámek; vložením jiné zálohy se data přepíšou.</p>'+
+    '<textarea class="field" id="bk" style="min-height:130px;font-size:12px">'+esc(backupText())+'</textarea>'+
+    '<button class="btn" style="margin-top:12px" data-act="bkcopy">Zkopírovat</button>'+
     '<button class="btn ghost" style="margin-top:10px" data-act="bkload">Obnovit z vloženého textu</button>'+
     '<p class="note" id="bkmsg"></p>'+
-    '<button class="btn quiet" data-act="close">Zavřít</button>');
+    '<button class="btn quiet" data-act="backup">Zpět na zálohy</button>');
 }
 function sheetReset(){
   openSheet('<h3 style="margin-bottom:6px">Ukončit výzvu?</h3>'+
@@ -1119,7 +1218,23 @@ function onAct(a,el){
     closeSheet(); render(); return;
   }
   if(a==="close"){ closeSheet(); return; }
-  if(a==="backup"){ sheetBackup(); return; }
+  if(a==="backup"){ pendingImport=null; sheetBackup(); return; }
+  if(a==="bksave"){ saveBackupFile(); return; }
+  if(a==="bkshare"){ shareBackupFile(); return; }
+  if(a==="bkpick"){
+    var fi=document.getElementById("bkfile");
+    if(fi) fi.click(); else bkMsg("Výběr souboru se nepovedlo otevřít.");
+    return;
+  }
+  if(a==="bktext"){ sheetBackupText(); return; }
+  if(a==="bkcancel"){ pendingImport=null; sheetBackup(); return; }
+  if(a==="bkapply"){
+    if(!pendingImport){ sheetBackup(); return; }
+    DB=pendingImport.data; pendingImport=null;
+    saveNow(); closeSheet(); render();
+    cheer("Data obnovena","Záloha je načtená.",2200,false);
+    return;
+  }
   if(a==="bkcopy"){
     var t=document.getElementById("bk");
     try{
@@ -1131,14 +1246,10 @@ function onAct(a,el){
     return;
   }
   if(a==="bkload"){
-    var msg=document.getElementById("bkmsg");
     try{
-      var o=JSON.parse(document.getElementById("bk").value);
-      if(!o||typeof o!=="object"||!o.setup||!o.startDate) throw new Error("bad");
-      DB=o; if(!DB.claimed) DB.claimed={}; if(!DB.days) DB.days={}; if(!Array.isArray(DB.archive)) DB.archive=[];
-      if(!Array.isArray(DB.ideas)) DB.ideas=[]; DB.ideaDel=null;
-      saveNow(); closeSheet(); render();
-    }catch(e){ msg.textContent="Tohle není platná záloha. Vlož celý text včetně složených závorek."; }
+      pendingImport=parseBackup(document.getElementById("bk").value);
+      sheetBackupConfirm();
+    }catch(e){ bkMsg("Tohle není platná záloha. Vlož celý text včetně složených závorek."); }
     return;
   }
   if(a==="reset"){ sheetReset(); return; }
@@ -1237,6 +1348,25 @@ document.addEventListener("input",function(ev){
   var btn=document.querySelector('[data-w="next"]');
   if(btn){ if(stepValid(DB.step)) btn.removeAttribute("disabled"); else btn.setAttribute("disabled",""); }
 });
+/* Nacteni zalohy ze souboru. */
+document.addEventListener("change",function(ev){
+  var el=ev.target;
+  if(!el||el.id!=="bkfile") return;
+  var f=el.files&&el.files[0];
+  el.value="";
+  if(!f){ return; }
+  if(f.size>8*1024*1024){ bkMsg("Soubor je moc velký, tohle není záloha."); return; }
+  var rd=new FileReader();
+  rd.onerror=function(){ bkMsg("Soubor se nepovedlo přečíst."); };
+  rd.onload=function(){
+    try{
+      pendingImport=parseBackup(String(rd.result));
+      sheetBackupConfirm();
+    }catch(e){ bkMsg("Tohle není záloha 90days. Vyber soubor 90days-zaloha-….json."); }
+  };
+  rd.readAsText(f);
+});
+
 document.addEventListener("keydown",function(ev){
   if(ev.key==="Escape"){ closeSheet(); return; }
   if(ev.key==="Enter"&&ev.target&&ev.target.id==="ideain"){ ev.preventDefault(); addIdea(); }
