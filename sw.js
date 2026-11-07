@@ -1,10 +1,10 @@
 /* 90days challenge – offline cache.
    Nejdřív síť, ať máš vždy aktuální verzi; při výpadku se sáhne do cache. */
-const CACHE = "90days-v5";
+const CACHE = "90days-v6";
 const FILES = [
   "./", "./index.html", "./manifest.webmanifest",
-  "./icon-180.png", "./icon-192.png", "./icon-512.png",
-  "./icon-512-maskable.png", "./favicon-64.png"
+  "./icon-180.png?v=3", "./icon-192.png?v=3", "./icon-512.png?v=3",
+  "./icon-512-maskable.png?v=3", "./favicon-64.png?v=3"
 ];
 
 self.addEventListener("install", e => {
