@@ -613,7 +613,9 @@ function renderWizard(){
       ((DB.archive&&DB.archive.length)
         ? '<button class="btn quiet" style="margin-top:0" data-act="tabhist">Historie · '+
           nPl(DB.archive.length,"uzavřená výzva","uzavřené výzvy","uzavřených výzev")+'</button>'
-        : '')+
+        : ((DB.ideas&&DB.ideas.length)
+            ? '<button class="btn quiet" style="margin-top:0" data-act="tabhist">Historie a záloha</button>'
+            : ''))+
       '</div>';
   } else if(s.k==="summary"){
     var ok=STEPS.every(function(_,ix){ return stepValid(ix); });
@@ -846,9 +848,6 @@ function viewVize(){
     '</div>';
 
   h+='<div class="list" style="margin-top:10px">'+
-     '<button class="item" data-act="backup"><div class="lead"><b>Záloha a obnovení</b>'+
-     '<span>'+(DB.backupAt?"Poslední "+shortDate(DB.backupAt):"Zatím nezálohováno")+'</span></div>'+
-     '<span class="chev">'+IC.chev+'</span></button>'+
      '<button class="item" data-act="reset"><div class="lead"><b style="color:var(--bad)">Ukončit výzvu předčasně</b>'+
      '<span>S uložením do historie, nebo bez něj</span></div></button>'+
      '</div>';
@@ -898,7 +897,6 @@ function viewNapady(){
   if(!arr.length){
     h+='<div class="card"><p class="body">Sem si piš vize na další výzvy, jak tě napadají — '+
        'ať je máš připravené, až tahle skončí. Odškrtnout i smazat je můžeš kdykoli.</p></div>';
-    h+=backupRow();
     return h;
   }
 
@@ -917,7 +915,6 @@ function viewNapady(){
   }).join("");
 
   h+='<p class="note">Až tuhle výzvu uzavřeš, průvodce začne nanovo — nápady tu zůstanou.</p>';
-  h+=backupRow();
   return h;
 }
 

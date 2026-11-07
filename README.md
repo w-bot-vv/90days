@@ -48,7 +48,7 @@ Všechno se ukládá lokálně v prohlížeči (`localStorage`) pod klíčem `vy
 
 Data aplikace přidané na plochu drží iOS odděleně od Safari a nemaže je po sedmi dnech nečinnosti jako běžné weby v prohlížeči. I tak si dělej zálohu.
 
-**Záloha a obnovení** najdeš ve **Vizi**, a mimo běžící výzvu i v **Nápadech** a **Historii**. Má tři cesty:
+**Záloha a obnovení** najdeš na kartě **Historie**, dole pod seznamem uzavřených výzev. Má tři cesty:
 
 - *Uložit zálohu do souboru* — stáhne `90days-zaloha-RRRR-MM-DD.json` s běžící výzvou, celou historií i nápady.
 - *Sdílet zálohu…* — jen tam, kde to zařízení umí (typicky iPhone); pošle soubor do systémové nabídky, odkud ho uložíš do Souborů nebo na iCloud.

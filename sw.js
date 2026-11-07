@@ -1,6 +1,6 @@
 /* 90days challenge – offline cache.
    Nejdřív síť, ať máš vždy aktuální verzi; při výpadku se sáhne do cache. */
-const CACHE = "90days-v7";
+const CACHE = "90days-v8";
 const FILES = [
   "./", "./index.html", "./manifest.webmanifest",
   "./icon-180.png?v=3", "./icon-192.png?v=3", "./icon-512.png?v=3",
